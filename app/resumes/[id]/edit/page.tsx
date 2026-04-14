@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ResumeForm from "@/components/forms/resume-form";
-import type { ResumeData, ResumeRecord } from "@/lib/types";
+import type { ResumeRecord } from "@/lib/types";
+import { normalizeResumeData } from "@/lib/resume/normalizers";
 
 type EditResumePageProps = {
   params: Promise<{ id: string }>;
@@ -23,7 +24,11 @@ export default async function EditResumePage({
 
   const normalizedResume: ResumeRecord = {
     ...resume,
-    data: resume.data as ResumeData,
+    data: normalizeResumeData(resume.data, {
+      template: resume.template,
+      themeColor: resume.themeColor,
+      fontFamily: resume.fontFamily,
+    }),
   };
 
   return (

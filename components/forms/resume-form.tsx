@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ResumeRecord } from "@/lib/types";
+import { getResumeFormData } from "@/lib/resume/selectors";
 import {
   resumeFormSchema,
   type ResumeFormValues,
@@ -24,25 +25,10 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
     defaultValues: {
       title: resume.title,
       template: resume.template,
-      themeColor: resume.themeColor ?? "",
-      fontFamily: resume.fontFamily ?? "",
+      themeColor: resume.themeColor ?? resume.data.layout.themeColor ?? "",
+      fontFamily: resume.fontFamily ?? resume.data.layout.fontFamily ?? "",
       photoPath: resume.photoPath ?? "",
-      data: {
-        personal: {
-          fullName: resume.data.personal.fullName ?? "",
-          email: resume.data.personal.email ?? "",
-          phone: resume.data.personal.phone ?? "",
-          location: resume.data.personal.location ?? "",
-          linkedIn: resume.data.personal.linkedIn ?? "",
-          website: resume.data.personal.website ?? "",
-        },
-        summary: resume.data.summary ?? "",
-        experience: resume.data.experience ?? [],
-        education: resume.data.education ?? [],
-        skills: resume.data.skills ?? [],
-        projects: resume.data.projects ?? [],
-        certifications: resume.data.certifications ?? [],
-      },
+      data: getResumeFormData(resume.data),
     },
   });
 

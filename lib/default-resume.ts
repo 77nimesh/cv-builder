@@ -1,16 +1,7 @@
-export const defaultResumeData = {
-  personal: {
-    fullName: "",
-    email: "",
-    phone: "",
-    location: "",
-    linkedIn: "",
-    website: "",
-  },
-  summary: "",
-  experience: [],
-  education: [],
-  skills: [],
-  projects: [],
-  certifications: [],
-};
+export {
+  createDefaultResumeData,
+  defaultResumeData,
+  defaultResumeFormData,
+  defaultPersonalDetails,
+  resumeSectionOrder,
+} from "@/lib/resume/defaults";

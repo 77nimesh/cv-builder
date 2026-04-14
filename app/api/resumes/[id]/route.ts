@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { buildResumeDataFromFormData, normalizeResumeData } from "@/lib/resume/normalizers";
+import { resumeFormSchema } from "@/lib/validators";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -17,7 +19,14 @@ export async function GET(_: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
-    return NextResponse.json(resume);
+    return NextResponse.json({
+      ...resume,
+      data: normalizeResumeData(resume.data, {
+        template: resume.template,
+        themeColor: resume.themeColor,
+        fontFamily: resume.fontFamily,
+      }),
+    });
   } catch (error) {
     console.error("Failed to fetch resume:", error);
     return NextResponse.json(
@@ -30,7 +39,14 @@ export async function GET(_: NextRequest, context: RouteContext) {
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = resumeFormSchema.parse(rawBody);
+
+    const data = buildResumeDataFromFormData(body.data, {
+      template: body.template,
+      themeColor: body.themeColor ?? null,
+      fontFamily: body.fontFamily ?? null,
+    });
 
     const updatedResume = await prisma.resume.update({
       where: { id },
@@ -39,12 +55,19 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         template: body.template,
         themeColor: body.themeColor || null,
         fontFamily: body.fontFamily || null,
-        data: body.data,
+        data,
         photoPath: body.photoPath || null,
       },
     });
 
-    return NextResponse.json(updatedResume);
+    return NextResponse.json({
+      ...updatedResume,
+      data: normalizeResumeData(updatedResume.data, {
+        template: updatedResume.template,
+        themeColor: updatedResume.themeColor,
+        fontFamily: updatedResume.fontFamily,
+      }),
+    });
   } catch (error) {
     console.error("Failed to update resume:", error);
     return NextResponse.json(
