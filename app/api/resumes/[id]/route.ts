@@ -1,11 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { buildResumeDataFromFormData, normalizeResumeData } from "@/lib/resume/normalizers";
+import {
+  buildResumeDataFromFormData,
+  normalizeResumeData,
+} from "@/lib/resume/normalizers";
 import { resumeFormSchema } from "@/lib/validators";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+function readString(value: unknown, fallback: string) {
+  return typeof value === "string" && value.trim().length > 0 ? value : fallback;
+}
+
+function readNullableString(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function hasCanonicalSectionsPayload(value: unknown): value is {
+  title?: string;
+  template?: string;
+  themeColor?: string | null;
+  fontFamily?: string | null;
+  photoPath?: string | null;
+  data: { sections: unknown[] };
+} {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  const data = record.data;
+
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  const dataRecord = data as Record<string, unknown>;
+  return Array.isArray(dataRecord.sections);
+}
 
 export async function GET(_: NextRequest, context: RouteContext) {
   try {
@@ -40,6 +74,42 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const rawBody = await req.json();
+
+    if (hasCanonicalSectionsPayload(rawBody)) {
+      const title = readString(rawBody.title, "Untitled Resume");
+      const template = readString(rawBody.template, "modern-1");
+      const themeColor = readNullableString(rawBody.themeColor);
+      const fontFamily = readNullableString(rawBody.fontFamily);
+      const photoPath = readNullableString(rawBody.photoPath);
+
+      const data = normalizeResumeData(rawBody.data, {
+        template,
+        themeColor,
+        fontFamily,
+      });
+
+      const updatedResume = await prisma.resume.update({
+        where: { id },
+        data: {
+          title,
+          template,
+          themeColor,
+          fontFamily,
+          data,
+          photoPath,
+        },
+      });
+
+      return NextResponse.json({
+        ...updatedResume,
+        data: normalizeResumeData(updatedResume.data, {
+          template: updatedResume.template,
+          themeColor: updatedResume.themeColor,
+          fontFamily: updatedResume.fontFamily,
+        }),
+      });
+    }
+
     const body = resumeFormSchema.parse(rawBody);
 
     const data = buildResumeDataFromFormData(body.data, {

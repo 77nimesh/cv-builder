@@ -7,14 +7,54 @@ export type PersonalDetails = {
   website: string;
 };
 
+export type ExperienceItem = {
+  company: string;
+  role: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+};
+
+export type EducationItem = {
+  institution: string;
+  degree: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+};
+
+export type SkillItem = {
+  name: string;
+  level: string;
+};
+
+export type ProjectItem = {
+  name: string;
+  role: string;
+  url: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+};
+
+export type CertificationItem = {
+  name: string;
+  issuer: string;
+  issueDate: string;
+  credentialId: string;
+  url: string;
+};
+
 export type ResumeLegacyData = {
   personal: PersonalDetails;
   summary: string;
-  experience: Array<unknown>;
-  education: Array<unknown>;
-  skills: Array<unknown>;
-  projects: Array<unknown>;
-  certifications: Array<unknown>;
+  experience: ExperienceItem[];
+  education: EducationItem[];
+  skills: SkillItem[];
+  projects: ProjectItem[];
+  certifications: CertificationItem[];
 };
 
 export type ResumeFormData = ResumeLegacyData;

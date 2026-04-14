@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { ResumeRecord } from "@/lib/types";
-import ResumePreview from "@/components/preview/resume-preview";
+import PreviewEditor from "@/components/preview/preview-editor";
 import { normalizeResumeData } from "@/lib/resume/normalizers";
 
 type PreviewResumePageProps = {
@@ -59,7 +59,7 @@ export default async function PreviewResumePage({
           </div>
         </div>
 
-        <ResumePreview resume={normalizedResume} />
+        <PreviewEditor resume={normalizedResume} />
       </div>
     </main>
   );
