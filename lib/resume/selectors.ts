@@ -1,5 +1,7 @@
 import type {
   CertificationItem,
+  CustomSectionEntry,
+  CustomSectionFormSection,
   EducationItem,
   ExperienceItem,
   PersonalDetails,
@@ -9,10 +11,16 @@ import type {
   ResumeSection,
   ResumeSectionType,
   SkillItem,
-} from "@/types/resume";
+} from "@/lib/types";
 import {
+  defaultCertificationItem,
+  defaultCustomSectionEntry,
+  defaultEducationItem,
+  defaultExperienceItem,
   defaultPersonalDetails,
+  defaultProjectItem,
   defaultResumeFormData,
+  defaultSkillItem,
 } from "@/lib/resume/defaults";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -21,6 +29,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function readString(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
+}
+
+function readBoolean(value: unknown, fallback = true): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function readZone(value: unknown): "main" | "sidebar" {
+  return value === "sidebar" ? "sidebar" : "main";
 }
 
 export function getOrderedSections(data: ResumeData): ResumeSection[] {
@@ -38,6 +54,10 @@ export function getVisibleSections(data: ResumeData): ResumeSection[] {
   return getOrderedSections(data).filter((section) => section.visible);
 }
 
+export function getCustomSections(data: ResumeData): ResumeSection[] {
+  return getOrderedSections(data).filter((section) => section.type === "custom");
+}
+
 export function getSectionTitle(
   data: ResumeData,
   type: ResumeSectionType,
@@ -47,13 +67,6 @@ export function getSectionTitle(
   const title = section?.title?.trim();
 
   return title && title.length > 0 ? title : fallback;
-}
-
-export function isSectionVisible(
-  data: ResumeData,
-  type: ResumeSectionType
-): boolean {
-  return getSection(data, type)?.visible ?? true;
 }
 
 export function getPersonalDetails(data: ResumeData): PersonalDetails {
@@ -91,14 +104,7 @@ export function getSummaryText(data: ResumeData): string {
 
 function readExperienceItem(value: unknown): ExperienceItem {
   if (!isRecord(value)) {
-    return {
-      company: "",
-      role: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-    };
+    return { ...defaultExperienceItem };
   }
 
   return {
@@ -113,14 +119,7 @@ function readExperienceItem(value: unknown): ExperienceItem {
 
 function readEducationItem(value: unknown): EducationItem {
   if (!isRecord(value)) {
-    return {
-      institution: "",
-      degree: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-    };
+    return { ...defaultEducationItem };
   }
 
   return {
@@ -135,10 +134,7 @@ function readEducationItem(value: unknown): EducationItem {
 
 function readSkillItem(value: unknown): SkillItem {
   if (!isRecord(value)) {
-    return {
-      name: "",
-      level: "",
-    };
+    return { ...defaultSkillItem };
   }
 
   return {
@@ -149,14 +145,7 @@ function readSkillItem(value: unknown): SkillItem {
 
 function readProjectItem(value: unknown): ProjectItem {
   if (!isRecord(value)) {
-    return {
-      name: "",
-      role: "",
-      url: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-    };
+    return { ...defaultProjectItem };
   }
 
   return {
@@ -171,13 +160,7 @@ function readProjectItem(value: unknown): ProjectItem {
 
 function readCertificationItem(value: unknown): CertificationItem {
   if (!isRecord(value)) {
-    return {
-      name: "",
-      issuer: "",
-      issueDate: "",
-      credentialId: "",
-      url: "",
-    };
+    return { ...defaultCertificationItem };
   }
 
   return {
@@ -186,6 +169,19 @@ function readCertificationItem(value: unknown): CertificationItem {
     issueDate: readString(value.issueDate),
     credentialId: readString(value.credentialId),
     url: readString(value.url),
+  };
+}
+
+function readCustomSectionEntry(value: unknown): CustomSectionEntry {
+  if (!isRecord(value)) {
+    return { ...defaultCustomSectionEntry };
+  }
+
+  return {
+    title: readString(value.title),
+    subtitle: readString(value.subtitle),
+    meta: readString(value.meta),
+    description: readString(value.description),
   };
 }
 
@@ -228,6 +224,18 @@ export function getCertificationItems(data: ResumeData): CertificationItem[] {
   );
 }
 
+export function getCustomSectionFormData(
+  data: ResumeData
+): CustomSectionFormSection[] {
+  return getCustomSections(data).map((section) => ({
+    id: section.id,
+    title: section.title,
+    zone: readZone(section.zone),
+    visible: readBoolean(section.visible, true),
+    entries: section.items.map((item) => readCustomSectionEntry(item.content)),
+  }));
+}
+
 export function getResumeFormData(data: ResumeData): ResumeFormData {
   return {
     personal: getPersonalDetails(data),
@@ -237,5 +245,6 @@ export function getResumeFormData(data: ResumeData): ResumeFormData {
     skills: getSkillItems(data),
     projects: getProjectItems(data),
     certifications: getCertificationItems(data),
+    customSections: getCustomSectionFormData(data),
   };
 }

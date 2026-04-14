@@ -1,8 +1,14 @@
 "use client";
 
-import type { ResumeData, ResumeSection, ResumeZone } from "@/lib/types";
+import type {
+  CustomSectionEntry,
+  ResumeData,
+  ResumeSection,
+  ResumeZone,
+} from "@/lib/types";
 import {
   getCertificationItems,
+  getCustomSections,
   getEducationItems,
   getExperienceItems,
   getPersonalDetails,
@@ -48,6 +54,32 @@ function formatDateRange(startDate: string, endDate: string) {
   return "";
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readCustomEntry(content: unknown): CustomSectionEntry {
+  if (!isRecord(content)) {
+    return {
+      title: "",
+      subtitle: "",
+      meta: "",
+      description: "",
+    };
+  }
+
+  return {
+    title: typeof content.title === "string" ? content.title : "",
+    subtitle: typeof content.subtitle === "string" ? content.subtitle : "",
+    meta: typeof content.meta === "string" ? content.meta : "",
+    description: typeof content.description === "string" ? content.description : "",
+  };
+}
+
+function getCustomEntries(section: ResumeSection): CustomSectionEntry[] {
+  return section.items.map((item) => readCustomEntry(item.content));
+}
+
 export default function ModernTemplateOne({
   data,
   editable = false,
@@ -67,11 +99,94 @@ export default function ModernTemplateOne({
   const projectItems = getProjectItems(data);
   const certificationItems = getCertificationItems(data);
   const visibleSections = getVisibleSections(data);
+  const customSections = getCustomSections(data);
 
   const sidebarSections = visibleSections.filter(
     (section) => section.zone === "sidebar"
   );
   const mainSections = visibleSections.filter((section) => section.zone === "main");
+
+  function renderSidebarCustomSection(section: ResumeSection) {
+    const entries = getCustomEntries(section);
+
+    return (
+      <div>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
+          {section.title || "Custom Section"}
+        </h2>
+
+        <div className="mt-4 space-y-4 text-sm text-slate-100">
+          {entries.length === 0 ? (
+            <p className="text-slate-300">No entries yet.</p>
+          ) : (
+            entries.map((entry, index) => (
+              <div key={`${section.id}-${index}`}>
+                {hasText(entry.title) && <p className="font-medium">{entry.title}</p>}
+                {hasText(entry.subtitle) && (
+                  <p className="text-slate-300">{entry.subtitle}</p>
+                )}
+                {hasText(entry.meta) && (
+                  <p className="text-slate-400">{entry.meta}</p>
+                )}
+                {hasText(entry.description) && (
+                  <p className="mt-2 whitespace-pre-wrap text-slate-200">
+                    {entry.description}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function renderMainCustomSection(section: ResumeSection) {
+    const entries = getCustomEntries(section);
+
+    return (
+      <div>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+          {section.title || "Custom Section"}
+        </h2>
+        <div className="mt-4 h-px bg-slate-200" />
+
+        <div className="mt-6 space-y-8">
+          {entries.length === 0 ? (
+            <p className="text-[15px] leading-7 text-slate-500">
+              Add entries in the editor.
+            </p>
+          ) : (
+            entries.map((entry, index) => (
+              <div key={`${section.id}-${index}`}>
+                <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    {hasText(entry.title) && (
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {entry.title}
+                      </h3>
+                    )}
+
+                    {(hasText(entry.subtitle) || hasText(entry.meta)) && (
+                      <p className="text-slate-700">
+                        {[entry.subtitle, entry.meta].filter(Boolean).join(" • ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {hasText(entry.description) && (
+                  <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
+                    {entry.description}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
 
   function renderSidebarSection(section: ResumeSection) {
     switch (section.type) {
@@ -213,6 +328,9 @@ export default function ModernTemplateOne({
             </p>
           </div>
         );
+
+      case "custom":
+        return renderSidebarCustomSection(section);
 
       default:
         return (
@@ -464,6 +582,9 @@ export default function ModernTemplateOne({
           </div>
         );
 
+      case "custom":
+        return renderMainCustomSection(section);
+
       default:
         return null;
     }
@@ -472,8 +593,6 @@ export default function ModernTemplateOne({
   function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
     const isDragged = draggedSectionId === section.id;
     const isDropTarget = dropTargetSectionId === section.id;
-
-    const baseClasses = "rounded-2xl px-2 py-2";
 
     const interactiveClasses = editable
       ? zone === "sidebar"
@@ -513,16 +632,12 @@ export default function ModernTemplateOne({
             : undefined
         }
         onDragEnd={editable ? () => onSectionDragEnd?.() : undefined}
-        className={`${baseClasses} ${interactiveClasses} ${dropClasses} ${
+        className={`rounded-2xl px-2 py-2 ${interactiveClasses} ${dropClasses} ${
           isDragged ? "opacity-60" : ""
         }`}
       >
         {editable && (
-          <div
-            className={`mb-3 text-[11px] uppercase tracking-[0.2em] ${
-              zone === "sidebar" ? "text-slate-400" : "text-slate-400"
-            }`}
-          >
+          <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-slate-400">
             Drag section
           </div>
         )}
@@ -535,10 +650,10 @@ export default function ModernTemplateOne({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[850px] rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 print:max-w-none print:rounded-none print:shadow-none print:ring-0">
+    <div className="mx-auto w-full max-w-[850px] rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 print:max-w-none print:rounded-none print:bg-transparent print:shadow-none print:ring-0">
       <div className="grid min-h-[1100px] grid-cols-1 md:grid-cols-[280px_1fr] print:grid-cols-[280px_1fr]">
         <aside
-          className={`bg-slate-900 px-8 py-10 text-white ${
+          className={`bg-slate-900 px-8 py-10 text-white print:bg-transparent ${
             editable ? "min-h-[1100px]" : ""
           }`}
           onDragOver={
@@ -580,7 +695,7 @@ export default function ModernTemplateOne({
               : undefined
           }
         >
-          <div className="space-y-12">
+          <div className="space-y-12 print-main-fragment">
             {mainSections.map((section) => renderSectionShell(section, "main"))}
           </div>
         </section>

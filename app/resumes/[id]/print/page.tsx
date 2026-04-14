@@ -47,11 +47,29 @@ export default async function PrintResumePage({
             margin: 0;
             padding: 0;
           }
+
+          .print-main-fragment {
+            padding-top: 8mm;
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
+          }
+
+          .print-avoid-break {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
         }
       `}</style>
 
-      <div className="mx-auto w-[794px] bg-white print:w-full">
-        <ResumePreview resume={normalizedResume} />
+      <div className="relative mx-auto w-[794px] bg-white print:w-full">
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-y-0 left-0 hidden w-[280px] bg-slate-900 print:block"
+        />
+
+        <div className="relative z-10">
+          <ResumePreview resume={normalizedResume} />
+        </div>
       </div>
     </main>
   );

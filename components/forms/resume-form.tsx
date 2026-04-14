@@ -2,58 +2,190 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useFieldArray, useForm } from "react-hook-form";
+import {
+  type Control,
+  type UseFormRegister,
+  useFieldArray,
+  useForm,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ResumeRecord } from "@/lib/types";
+import { getResumeFormData } from "@/lib/resume/selectors";
+import {
+  createEmptyCustomSectionFormSection,
+  defaultCertificationItem,
+  defaultEducationItem,
+  defaultExperienceItem,
+  defaultProjectItem,
+  defaultSkillItem,
+} from "@/lib/resume/defaults";
 import {
   resumeFormSchema,
   type ResumeFormValues,
 } from "@/lib/validators";
-import { getResumeFormData } from "@/lib/resume/selectors";
 
 type ResumeFormProps = {
   resume: ResumeRecord;
 };
 
-const emptyExperience = {
-  company: "",
-  role: "",
-  location: "",
-  startDate: "",
-  endDate: "",
-  description: "",
+type CustomSectionFieldsProps = {
+  index: number;
+  control: Control<ResumeFormValues>;
+  register: UseFormRegister<ResumeFormValues>;
+  removeSection: (index: number) => void;
 };
 
-const emptyEducation = {
-  institution: "",
-  degree: "",
-  location: "",
-  startDate: "",
-  endDate: "",
-  description: "",
-};
+function CustomSectionFields({
+  index,
+  control,
+  register,
+  removeSection,
+}: CustomSectionFieldsProps) {
+  const entriesArray = useFieldArray({
+    control,
+    name: `data.customSections.${index}.entries` as const,
+  });
 
-const emptySkill = {
-  name: "",
-  level: "",
-};
+  return (
+    <div className="rounded-2xl border border-slate-200 p-5">
+      <input
+        type="hidden"
+        {...register(`data.customSections.${index}.id` as const)}
+      />
 
-const emptyProject = {
-  name: "",
-  role: "",
-  url: "",
-  startDate: "",
-  endDate: "",
-  description: "",
-};
+      <div className="flex items-center justify-between gap-4">
+        <h3 className="font-medium">Custom Section #{index + 1}</h3>
+        <button
+          type="button"
+          onClick={() => removeSection(index)}
+          className="text-sm text-red-600"
+        >
+          Remove Section
+        </button>
+      </div>
 
-const emptyCertification = {
-  name: "",
-  issuer: "",
-  issueDate: "",
-  credentialId: "",
-  url: "",
-};
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-medium">Section Title</label>
+          <input
+            {...register(`data.customSections.${index}.title` as const)}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+            placeholder="Awards"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">Column</label>
+          <select
+            {...register(`data.customSections.${index}.zone` as const)}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+          >
+            <option value="main">Main</option>
+            <option value="sidebar">Sidebar</option>
+          </select>
+        </div>
+
+        <div className="md:col-span-2 flex items-center gap-2">
+          <input
+            type="checkbox"
+            {...register(`data.customSections.${index}.visible` as const)}
+            className="h-4 w-4"
+          />
+          <label className="text-sm font-medium">Visible in preview and PDF</label>
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-center justify-between gap-4">
+        <h4 className="font-medium">Entries</h4>
+        <button
+          type="button"
+          onClick={() =>
+            entriesArray.append({
+              title: "",
+              subtitle: "",
+              meta: "",
+              description: "",
+            })
+          }
+          className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
+        >
+          Add Entry
+        </button>
+      </div>
+
+      {entriesArray.fields.length === 0 ? (
+        <p className="mt-4 text-sm text-slate-500">No entries yet.</p>
+      ) : (
+        <div className="mt-4 space-y-4">
+          {entriesArray.fields.map((field, entryIndex) => (
+            <div
+              key={field.id}
+              className="rounded-xl border border-slate-200 p-4"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <h5 className="font-medium">Entry #{entryIndex + 1}</h5>
+                <button
+                  type="button"
+                  onClick={() => entriesArray.remove(entryIndex)}
+                  className="text-sm text-red-600"
+                >
+                  Remove Entry
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Title</label>
+                  <input
+                    {...register(
+                      `data.customSections.${index}.entries.${entryIndex}.title` as const
+                    )}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+                    placeholder="Dean’s List"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Subtitle</label>
+                  <input
+                    {...register(
+                      `data.customSections.${index}.entries.${entryIndex}.subtitle` as const
+                    )}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+                    placeholder="University of Adelaide"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium">Meta</label>
+                  <input
+                    {...register(
+                      `data.customSections.${index}.entries.${entryIndex}.meta` as const
+                    )}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+                    placeholder="2024 • Adelaide"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-medium">Description</label>
+                <textarea
+                  {...register(
+                    `data.customSections.${index}.entries.${entryIndex}.description` as const
+                  )}
+                  rows={4}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+                  placeholder="Describe this entry..."
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ResumeForm({ resume }: ResumeFormProps) {
   const router = useRouter();
@@ -102,6 +234,11 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
   const certificationsArray = useFieldArray({
     control,
     name: "data.certifications",
+  });
+
+  const customSectionsArray = useFieldArray({
+    control,
+    name: "data.customSections",
   });
 
   async function onSubmit(values: ResumeFormValues) {
@@ -241,7 +378,7 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
           <h2 className="text-xl font-semibold">Experience</h2>
           <button
             type="button"
-            onClick={() => experienceArray.append(emptyExperience)}
+            onClick={() => experienceArray.append({ ...defaultExperienceItem })}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Experience
@@ -337,7 +474,7 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
           <h2 className="text-xl font-semibold">Education</h2>
           <button
             type="button"
-            onClick={() => educationArray.append(emptyEducation)}
+            onClick={() => educationArray.append({ ...defaultEducationItem })}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Education
@@ -433,7 +570,7 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
           <h2 className="text-xl font-semibold">Skills</h2>
           <button
             type="button"
-            onClick={() => skillsArray.append(emptySkill)}
+            onClick={() => skillsArray.append({ ...defaultSkillItem })}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Skill
@@ -490,7 +627,7 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
           <h2 className="text-xl font-semibold">Projects</h2>
           <button
             type="button"
-            onClick={() => projectsArray.append(emptyProject)}
+            onClick={() => projectsArray.append({ ...defaultProjectItem })}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Project
@@ -584,7 +721,9 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
           <h2 className="text-xl font-semibold">Certifications</h2>
           <button
             type="button"
-            onClick={() => certificationsArray.append(emptyCertification)}
+            onClick={() =>
+              certificationsArray.append({ ...defaultCertificationItem })
+            }
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Certification
@@ -660,6 +799,39 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-xl font-semibold">Custom Sections</h2>
+          <button
+            type="button"
+            onClick={() =>
+              customSectionsArray.append(createEmptyCustomSectionFormSection())
+            }
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
+          >
+            Add Custom Section
+          </button>
+        </div>
+
+        {customSectionsArray.fields.length === 0 ? (
+          <p className="mt-6 text-sm text-slate-500">
+            No custom sections added yet.
+          </p>
+        ) : (
+          <div className="mt-6 space-y-4">
+            {customSectionsArray.fields.map((field, index) => (
+              <CustomSectionFields
+                key={field.id}
+                index={index}
+                control={control}
+                register={register}
+                removeSection={customSectionsArray.remove}
+              />
             ))}
           </div>
         )}

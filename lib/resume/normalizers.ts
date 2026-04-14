@@ -1,15 +1,28 @@
 import type {
+  CertificationItem,
+  CustomSectionEntry,
+  CustomSectionFormSection,
+  EducationItem,
+  ExperienceItem,
   PersonalDetails,
+  ProjectItem,
   ResumeData,
   ResumeFormData,
   ResumeSection,
   ResumeSectionItem,
   ResumeSectionType,
   ResumeZone,
-} from "@/types/resume";
+  SkillItem,
+} from "@/lib/types";
 import {
   createDefaultResumeData,
+  defaultCertificationItem,
+  defaultCustomSectionEntry,
+  defaultEducationItem,
+  defaultExperienceItem,
   defaultPersonalDetails,
+  defaultProjectItem,
+  defaultSkillItem,
 } from "@/lib/resume/defaults";
 
 type ResumeNormalizationOptions = {
@@ -76,17 +89,97 @@ function normalizeSummaryContent(value: unknown): { text: string } {
   };
 }
 
-function normalizeGenericContent(value: unknown): unknown {
-  return value ?? {};
+function normalizeExperienceItem(value: unknown): ExperienceItem {
+  if (!isRecord(value)) {
+    return { ...defaultExperienceItem };
+  }
+
+  return {
+    company: readString(value.company),
+    role: readString(value.role),
+    location: readString(value.location),
+    startDate: readString(value.startDate),
+    endDate: readString(value.endDate),
+    description: readString(value.description),
+  };
+}
+
+function normalizeEducationItem(value: unknown): EducationItem {
+  if (!isRecord(value)) {
+    return { ...defaultEducationItem };
+  }
+
+  return {
+    institution: readString(value.institution),
+    degree: readString(value.degree),
+    location: readString(value.location),
+    startDate: readString(value.startDate),
+    endDate: readString(value.endDate),
+    description: readString(value.description),
+  };
+}
+
+function normalizeSkillItem(value: unknown): SkillItem {
+  if (!isRecord(value)) {
+    return { ...defaultSkillItem };
+  }
+
+  return {
+    name: readString(value.name),
+    level: readString(value.level),
+  };
+}
+
+function normalizeProjectItem(value: unknown): ProjectItem {
+  if (!isRecord(value)) {
+    return { ...defaultProjectItem };
+  }
+
+  return {
+    name: readString(value.name),
+    role: readString(value.role),
+    url: readString(value.url),
+    startDate: readString(value.startDate),
+    endDate: readString(value.endDate),
+    description: readString(value.description),
+  };
+}
+
+function normalizeCertificationItem(value: unknown): CertificationItem {
+  if (!isRecord(value)) {
+    return { ...defaultCertificationItem };
+  }
+
+  return {
+    name: readString(value.name),
+    issuer: readString(value.issuer),
+    issueDate: readString(value.issueDate),
+    credentialId: readString(value.credentialId),
+    url: readString(value.url),
+  };
+}
+
+function normalizeCustomSectionEntry(value: unknown): CustomSectionEntry {
+  if (!isRecord(value)) {
+    return { ...defaultCustomSectionEntry };
+  }
+
+  return {
+    title: readString(value.title),
+    subtitle: readString(value.subtitle),
+    meta: readString(value.meta),
+    description: readString(value.description),
+  };
 }
 
 function buildNormalizedItem(
   sectionType: ResumeSectionType,
   rawItem: unknown,
-  fallbackPosition: number
+  fallbackPosition: number,
+  fallbackPrefix: string
 ): ResumeSectionItem {
   const itemRecord = isRecord(rawItem) ? rawItem : null;
-  const id = readString(itemRecord?.id, `${sectionType}-${fallbackPosition + 1}`);
+  const id = readString(itemRecord?.id, `${fallbackPrefix}-${fallbackPosition + 1}`);
   const position = readPosition(itemRecord?.position, fallbackPosition);
   const rawContent = itemRecord?.content ?? rawItem;
 
@@ -103,17 +196,53 @@ function buildNormalizedItem(
         position,
         content: normalizeSummaryContent(rawContent),
       };
+    case "experience":
+      return {
+        id,
+        position,
+        content: normalizeExperienceItem(rawContent),
+      };
+    case "education":
+      return {
+        id,
+        position,
+        content: normalizeEducationItem(rawContent),
+      };
+    case "skills":
+      return {
+        id,
+        position,
+        content: normalizeSkillItem(rawContent),
+      };
+    case "projects":
+      return {
+        id,
+        position,
+        content: normalizeProjectItem(rawContent),
+      };
+    case "certifications":
+      return {
+        id,
+        position,
+        content: normalizeCertificationItem(rawContent),
+      };
+    case "custom":
+      return {
+        id,
+        position,
+        content: normalizeCustomSectionEntry(rawContent),
+      };
     default:
       return {
         id,
         position,
-        content: normalizeGenericContent(rawContent),
+        content: rawContent ?? {},
       };
   }
 }
 
 function buildDefaultSectionTemplate(
-  sectionType: ResumeSectionType
+  sectionType: Exclude<ResumeSectionType, "custom">
 ): ResumeSection {
   const defaultData = createDefaultResumeData();
   const section = defaultData.sections.find((item) => item.type === sectionType);
@@ -127,12 +256,14 @@ function buildDefaultSectionTemplate(
 
 function normalizeSectionItems(
   sectionType: ResumeSectionType,
-  rawItems: unknown
+  rawItems: unknown,
+  fallbackPrefix: string
 ): ResumeSectionItem[] {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
-    const defaultSection = buildDefaultSectionTemplate(sectionType);
-
     if (sectionType === "personal-details" || sectionType === "summary") {
+      const defaultSection = buildDefaultSectionTemplate(
+        sectionType as "personal-details" | "summary"
+      );
       return defaultSection.items.map((item) => ({ ...item }));
     }
 
@@ -140,12 +271,14 @@ function normalizeSectionItems(
   }
 
   return rawItems
-    .map((item, index) => buildNormalizedItem(sectionType, item, index))
+    .map((item, index) =>
+      buildNormalizedItem(sectionType, item, index, fallbackPrefix)
+    )
     .sort((left, right) => left.position - right.position)
     .map((item, index) => ({
       ...item,
       position: index,
-      id: item.id || `${sectionType}-${index + 1}`,
+      id: item.id || `${fallbackPrefix}-${index + 1}`,
     }));
 }
 
@@ -163,7 +296,29 @@ function normalizeCanonicalSection(
     zone: readZone(sectionRecord.zone, defaultSection.zone),
     position: readPosition(sectionRecord.position, fallbackPosition),
     visible: readBoolean(sectionRecord.visible, defaultSection.visible),
-    items: normalizeSectionItems(defaultSection.type, sectionRecord.items),
+    items: normalizeSectionItems(
+      defaultSection.type,
+      sectionRecord.items,
+      defaultSection.id
+    ),
+  };
+}
+
+function normalizeCustomSection(
+  rawSection: unknown,
+  fallbackPosition: number
+): ResumeSection {
+  const sectionRecord = isRecord(rawSection) ? rawSection : {};
+  const id = readString(sectionRecord.id, `custom-${fallbackPosition + 1}`);
+
+  return {
+    id,
+    type: "custom",
+    title: readString(sectionRecord.title, "Custom Section"),
+    zone: readZone(sectionRecord.zone, "main"),
+    position: readPosition(sectionRecord.position, fallbackPosition),
+    visible: readBoolean(sectionRecord.visible, true),
+    items: normalizeSectionItems("custom", sectionRecord.items, `${id}-entry`),
   };
 }
 
@@ -180,6 +335,26 @@ function normalizeCanonicalResumeData(
   const meta = isRecord(value.meta) ? value.meta : {};
   const layout = isRecord(value.layout) ? value.layout : {};
   const sections = Array.isArray(value.sections) ? value.sections : [];
+
+  const builtInSections = defaults.sections.map((defaultSection, index) => {
+    const rawSection = sections.find((section) => {
+      if (!isRecord(section)) {
+        return false;
+      }
+
+      return (
+        section.type === defaultSection.type || section.id === defaultSection.id
+      );
+    });
+
+    return normalizeCanonicalSection(rawSection, defaultSection, index);
+  });
+
+  const customSections = sections
+    .filter((section) => isRecord(section) && section.type === "custom")
+    .map((section, index) =>
+      normalizeCustomSection(section, defaults.sections.length + index)
+    );
 
   return {
     meta: {
@@ -198,20 +373,7 @@ function normalizeCanonicalResumeData(
         options.fontFamily !== undefined ? options.fontFamily : layout.fontFamily
       ),
     },
-    sections: defaults.sections
-      .map((defaultSection, index) => {
-        const rawSection = sections.find((section) => {
-          if (!isRecord(section)) {
-            return false;
-          }
-
-          return (
-            section.type === defaultSection.type || section.id === defaultSection.id
-          );
-        });
-
-        return normalizeCanonicalSection(rawSection, defaultSection, index);
-      })
+    sections: [...builtInSections, ...customSections]
       .sort((left, right) => left.position - right.position)
       .map((section, index) => ({
         ...section,
@@ -222,6 +384,25 @@ function normalizeCanonicalResumeData(
 
 export function isCanonicalResumeData(value: unknown): value is ResumeData {
   return isRecord(value) && Array.isArray(value.sections);
+}
+
+function buildCustomSectionsFromFormData(
+  customSections: CustomSectionFormSection[],
+  startPosition: number
+): ResumeSection[] {
+  return customSections.map((section, index) => ({
+    id: section.id || `custom-${startPosition + index + 1}`,
+    type: "custom" as const,
+    title: readString(section.title, "Custom Section"),
+    zone: readZone(section.zone, "main"),
+    position: startPosition + index,
+    visible: readBoolean(section.visible, true),
+    items: normalizeSectionItems(
+      "custom",
+      section.entries,
+      `${section.id || `custom-${startPosition + index + 1}`}-entry`
+    ),
+  }));
 }
 
 export function buildResumeDataFromFormData(
@@ -261,38 +442,47 @@ export function buildResumeDataFromFormData(
       case "experience":
         return {
           ...section,
-          items: normalizeSectionItems("experience", formData.experience),
+          items: normalizeSectionItems("experience", formData.experience, "experience"),
         };
       case "education":
         return {
           ...section,
-          items: normalizeSectionItems("education", formData.education),
+          items: normalizeSectionItems("education", formData.education, "education"),
         };
       case "skills":
         return {
           ...section,
-          items: normalizeSectionItems("skills", formData.skills),
+          items: normalizeSectionItems("skills", formData.skills, "skills"),
         };
       case "projects":
         return {
           ...section,
-          items: normalizeSectionItems("projects", formData.projects),
+          items: normalizeSectionItems("projects", formData.projects, "projects"),
         };
       case "certifications":
         return {
           ...section,
-          items: normalizeSectionItems("certifications", formData.certifications),
+          items: normalizeSectionItems(
+            "certifications",
+            formData.certifications,
+            "certifications"
+          ),
         };
       default:
         return section;
     }
   });
 
+  const customSections = buildCustomSectionsFromFormData(
+    Array.isArray(formData.customSections) ? formData.customSections : [],
+    sections.length
+  );
+
   return normalizeCanonicalResumeData(
     {
       meta: defaults.meta,
       layout: defaults.layout,
-      sections,
+      sections: [...sections, ...customSections],
     },
     options
   );
@@ -319,6 +509,7 @@ export function normalizeResumeData(
       certifications: Array.isArray(legacy.certifications)
         ? legacy.certifications
         : [],
+      customSections: [],
     },
     options
   );

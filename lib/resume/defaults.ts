@@ -1,9 +1,16 @@
 import type {
+  CertificationItem,
+  CustomSectionEntry,
+  CustomSectionFormSection,
+  EducationItem,
+  ExperienceItem,
   PersonalDetails,
+  ProjectItem,
   ResumeData,
   ResumeFormData,
   ResumeSectionType,
-} from "@/types/resume";
+  SkillItem,
+} from "@/lib/types";
 
 export const resumeSectionOrder: ResumeSectionType[] = [
   "personal-details",
@@ -24,6 +31,67 @@ export const defaultPersonalDetails: PersonalDetails = {
   website: "",
 };
 
+export const defaultExperienceItem: ExperienceItem = {
+  company: "",
+  role: "",
+  location: "",
+  startDate: "",
+  endDate: "",
+  description: "",
+};
+
+export const defaultEducationItem: EducationItem = {
+  institution: "",
+  degree: "",
+  location: "",
+  startDate: "",
+  endDate: "",
+  description: "",
+};
+
+export const defaultSkillItem: SkillItem = {
+  name: "",
+  level: "",
+};
+
+export const defaultProjectItem: ProjectItem = {
+  name: "",
+  role: "",
+  url: "",
+  startDate: "",
+  endDate: "",
+  description: "",
+};
+
+export const defaultCertificationItem: CertificationItem = {
+  name: "",
+  issuer: "",
+  issueDate: "",
+  credentialId: "",
+  url: "",
+};
+
+export const defaultCustomSectionEntry: CustomSectionEntry = {
+  title: "",
+  subtitle: "",
+  meta: "",
+  description: "",
+};
+
+function createId(prefix: string) {
+  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export function createEmptyCustomSectionFormSection(): CustomSectionFormSection {
+  return {
+    id: createId("custom"),
+    title: "Custom Section",
+    zone: "main",
+    visible: true,
+    entries: [{ ...defaultCustomSectionEntry }],
+  };
+}
+
 export const defaultResumeFormData: ResumeFormData = {
   personal: { ...defaultPersonalDetails },
   summary: "",
@@ -32,6 +100,7 @@ export const defaultResumeFormData: ResumeFormData = {
   skills: [],
   projects: [],
   certifications: [],
+  customSections: [],
 };
 
 type CreateDefaultResumeDataOptions = {
@@ -128,7 +197,7 @@ export function createDefaultResumeData(
         id: "certifications",
         type: "certifications",
         title: "Certifications",
-        zone: "main",
+        zone: "sidebar",
         position: 6,
         visible: true,
         items: [],
