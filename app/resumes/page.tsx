@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import DuplicateResumeButton from "@/components/actions/duplicate-resume-button";
 
 export default async function ResumesPage() {
   const resumes = await prisma.resume.findMany({
@@ -50,12 +51,19 @@ export default async function ResumesPage() {
                     </p>
                   </div>
 
-                  <Link
-                    href={`/resumes/${resume.id}/edit`}
-                    className="rounded-xl border border-slate-300 px-4 py-2"
-                  >
-                    Edit
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <DuplicateResumeButton
+                      resumeId={resume.id}
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-2"
+                    />
+
+                    <Link
+                      href={`/resumes/${resume.id}/edit`}
+                      className="rounded-xl border border-slate-300 px-4 py-2"
+                    >
+                      Edit
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))

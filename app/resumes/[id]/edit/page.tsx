@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ResumeForm from "@/components/forms/resume-form";
+import DuplicateResumeButton from "@/components/actions/duplicate-resume-button";
 import type { ResumeRecord } from "@/lib/types";
 import { normalizeResumeData } from "@/lib/resume/normalizers";
 
@@ -42,12 +43,19 @@ export default async function EditResumePage({
             </p>
           </div>
 
-          <Link
-            href={`/resumes/${normalizedResume.id}/preview`}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-3"
-          >
-            Preview
-          </Link>
+          <div className="flex items-center gap-3">
+            <DuplicateResumeButton
+              resumeId={normalizedResume.id}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+            />
+
+            <Link
+              href={`/resumes/${normalizedResume.id}/preview`}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+            >
+              Preview
+            </Link>
+          </div>
         </div>
 
         <ResumeForm resume={normalizedResume} />

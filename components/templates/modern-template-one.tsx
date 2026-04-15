@@ -1,34 +1,44 @@
 "use client";
 
 import type {
+  CertificationItem,
   CustomSectionEntry,
+  EducationItem,
+  ExperienceItem,
+  ProjectItem,
   ResumeData,
   ResumeSection,
+  ResumeSectionItem,
   ResumeZone,
 } from "@/lib/types";
 import {
-  getCertificationItems,
-  getCustomSections,
-  getEducationItems,
-  getExperienceItems,
   getPersonalDetails,
-  getProjectItems,
-  getSectionTitle,
-  getSkillItems,
-  getSummaryText,
   getVisibleSections,
+  getSummaryText,
 } from "@/lib/resume/selectors";
+
+type DraggedItemState = {
+  sectionId: string;
+  itemId: string;
+};
 
 type ModernTemplateOneProps = {
   data: ResumeData;
   editable?: boolean;
   draggedSectionId?: string | null;
   dropTargetSectionId?: string | null;
+  draggedItem?: DraggedItemState | null;
+  dropTargetItem?: DraggedItemState | null;
   onSectionDragStart?: (sectionId: string) => void;
   onSectionDragEnter?: (sectionId: string) => void;
   onSectionDrop?: (sectionId: string) => void;
   onZoneDrop?: (zone: ResumeZone) => void;
   onSectionDragEnd?: () => void;
+  onItemDragStart?: (sectionId: string, itemId: string) => void;
+  onItemDragEnter?: (sectionId: string, itemId: string) => void;
+  onItemDrop?: (sectionId: string, itemId: string) => void;
+  onItemListDrop?: (sectionId: string) => void;
+  onItemDragEnd?: () => void;
 };
 
 function hasText(value: string) {
@@ -58,6 +68,96 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function readString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function readExperienceItem(content: unknown): ExperienceItem {
+  if (!isRecord(content)) {
+    return {
+      company: "",
+      role: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    };
+  }
+
+  return {
+    company: readString(content.company),
+    role: readString(content.role),
+    location: readString(content.location),
+    startDate: readString(content.startDate),
+    endDate: readString(content.endDate),
+    description: readString(content.description),
+  };
+}
+
+function readEducationItem(content: unknown): EducationItem {
+  if (!isRecord(content)) {
+    return {
+      institution: "",
+      degree: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    };
+  }
+
+  return {
+    institution: readString(content.institution),
+    degree: readString(content.degree),
+    location: readString(content.location),
+    startDate: readString(content.startDate),
+    endDate: readString(content.endDate),
+    description: readString(content.description),
+  };
+}
+
+function readProjectItem(content: unknown): ProjectItem {
+  if (!isRecord(content)) {
+    return {
+      name: "",
+      role: "",
+      url: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    };
+  }
+
+  return {
+    name: readString(content.name),
+    role: readString(content.role),
+    url: readString(content.url),
+    startDate: readString(content.startDate),
+    endDate: readString(content.endDate),
+    description: readString(content.description),
+  };
+}
+
+function readCertificationItem(content: unknown): CertificationItem {
+  if (!isRecord(content)) {
+    return {
+      name: "",
+      issuer: "",
+      issueDate: "",
+      credentialId: "",
+      url: "",
+    };
+  }
+
+  return {
+    name: readString(content.name),
+    issuer: readString(content.issuer),
+    issueDate: readString(content.issueDate),
+    credentialId: readString(content.credentialId),
+    url: readString(content.url),
+  };
+}
+
 function readCustomEntry(content: unknown): CustomSectionEntry {
   if (!isRecord(content)) {
     return {
@@ -69,15 +169,25 @@ function readCustomEntry(content: unknown): CustomSectionEntry {
   }
 
   return {
-    title: typeof content.title === "string" ? content.title : "",
-    subtitle: typeof content.subtitle === "string" ? content.subtitle : "",
-    meta: typeof content.meta === "string" ? content.meta : "",
-    description: typeof content.description === "string" ? content.description : "",
+    title: readString(content.title),
+    subtitle: readString(content.subtitle),
+    meta: readString(content.meta),
+    description: readString(content.description),
   };
 }
 
-function getCustomEntries(section: ResumeSection): CustomSectionEntry[] {
-  return section.items.map((item) => readCustomEntry(item.content));
+function getOrderedItems(section: ResumeSection): ResumeSectionItem[] {
+  return [...section.items].sort((left, right) => left.position - right.position);
+}
+
+function supportsItemDrag(section: ResumeSection) {
+  return (
+    section.type === "experience" ||
+    section.type === "education" ||
+    section.type === "projects" ||
+    section.type === "certifications" ||
+    section.type === "custom"
+  );
 }
 
 export default function ModernTemplateOne({
@@ -85,29 +195,167 @@ export default function ModernTemplateOne({
   editable = false,
   draggedSectionId = null,
   dropTargetSectionId = null,
+  draggedItem = null,
+  dropTargetItem = null,
   onSectionDragStart,
   onSectionDragEnter,
   onSectionDrop,
   onZoneDrop,
   onSectionDragEnd,
+  onItemDragStart,
+  onItemDragEnter,
+  onItemDrop,
+  onItemListDrop,
+  onItemDragEnd,
 }: ModernTemplateOneProps) {
   const personal = getPersonalDetails(data);
   const summary = getSummaryText(data);
-  const experienceItems = getExperienceItems(data);
-  const educationItems = getEducationItems(data);
-  const skillItems = getSkillItems(data);
-  const projectItems = getProjectItems(data);
-  const certificationItems = getCertificationItems(data);
   const visibleSections = getVisibleSections(data);
-  const customSections = getCustomSections(data);
 
   const sidebarSections = visibleSections.filter(
     (section) => section.zone === "sidebar"
   );
   const mainSections = visibleSections.filter((section) => section.zone === "main");
 
+function renderItemShell(
+  section: ResumeSection,
+  item: ResumeSectionItem,
+  content: React.ReactNode,
+  options: { compact?: boolean } = {}
+) {
+  const itemDragEnabled = editable && supportsItemDrag(section);
+  const isDraggedItem =
+    draggedItem?.sectionId === section.id && draggedItem.itemId === item.id;
+  const isDropTargetItem =
+    dropTargetItem?.sectionId === section.id && dropTargetItem.itemId === item.id;
+
+  const shellClasses = options.compact
+    ? "rounded-xl px-2 py-2 print:px-0 print:py-0"
+    : "rounded-xl px-3 py-3 print:px-0 print:py-0";
+
+  const hoverClasses = itemDragEnabled
+    ? section.zone === "sidebar"
+      ? "ring-1 ring-transparent transition hover:ring-white/20"
+      : "ring-1 ring-transparent transition hover:ring-slate-300"
+    : "";
+
+  const dropClasses = isDropTargetItem
+    ? section.zone === "sidebar"
+      ? "ring-2 ring-white/60"
+      : "ring-2 ring-slate-400"
+    : "";
+
+  return (
+    <div
+      key={item.id}
+      className={`${shellClasses} ${hoverClasses} ${dropClasses} ${
+        isDraggedItem ? "opacity-60" : ""
+      }`}
+      onDragEnter={
+        itemDragEnabled
+          ? (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onItemDragEnter?.(section.id, item.id);
+            }
+          : undefined
+      }
+      onDragOver={
+        itemDragEnabled
+          ? (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          : undefined
+      }
+      onDrop={
+        itemDragEnabled
+          ? (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onItemDrop?.(section.id, item.id);
+            }
+          : undefined
+      }
+    >
+      {itemDragEnabled && (
+        <div
+          draggable
+          onDragStart={(event) => {
+            event.stopPropagation();
+            onItemDragStart?.(section.id, item.id);
+          }}
+          onDragEnd={(event) => {
+            event.stopPropagation();
+            onItemDragEnd?.();
+          }}
+          className={`mb-3 inline-flex cursor-grab rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.2em] active:cursor-grabbing print:hidden ${
+            section.zone === "sidebar"
+              ? "border-white/20 text-slate-300"
+              : "border-slate-300 text-slate-500"
+          }`}
+        >
+          Drag item
+        </div>
+      )}
+
+      <div className="print-avoid-break">
+        {content}
+      </div>
+    </div>
+  );
+}
+
+  function renderItemList(
+    section: ResumeSection,
+    items: ResumeSectionItem[],
+    renderItem: (item: ResumeSectionItem, index: number) => React.ReactNode,
+    emptyState: React.ReactNode,
+    options: {
+      gapClassName: string;
+      compactItems?: boolean;
+      emptyClassName?: string;
+    }
+  ) {
+    const orderedItems = getOrderedItems(section);
+    const itemDragEnabled = editable && supportsItemDrag(section);
+
+    return (
+      <div
+        className={options.gapClassName}
+        onDragOver={
+          itemDragEnabled
+            ? (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+            : undefined
+        }
+        onDrop={
+          itemDragEnabled
+            ? (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onItemListDrop?.(section.id);
+              }
+            : undefined
+        }
+      >
+        {items.length === 0 ? (
+          <div className={options.emptyClassName}>{emptyState}</div>
+        ) : (
+          orderedItems.map((item, index) =>
+            renderItemShell(section, item, renderItem(item, index), {
+              compact: options.compactItems,
+            })
+          )
+        )}
+      </div>
+    );
+  }
+
   function renderSidebarCustomSection(section: ResumeSection) {
-    const entries = getCustomEntries(section);
+    const items = getOrderedItems(section);
 
     return (
       <div>
@@ -115,26 +363,35 @@ export default function ModernTemplateOne({
           {section.title || "Custom Section"}
         </h2>
 
-        <div className="mt-4 space-y-4 text-sm text-slate-100">
-          {entries.length === 0 ? (
-            <p className="text-slate-300">No entries yet.</p>
-          ) : (
-            entries.map((entry, index) => (
-              <div key={`${section.id}-${index}`}>
-                {hasText(entry.title) && <p className="font-medium">{entry.title}</p>}
-                {hasText(entry.subtitle) && (
-                  <p className="text-slate-300">{entry.subtitle}</p>
-                )}
-                {hasText(entry.meta) && (
-                  <p className="text-slate-400">{entry.meta}</p>
-                )}
-                {hasText(entry.description) && (
-                  <p className="mt-2 whitespace-pre-wrap text-slate-200">
-                    {entry.description}
-                  </p>
-                )}
-              </div>
-            ))
+        <div className="mt-4">
+          {renderItemList(
+            section,
+            items,
+            (item) => {
+              const entry = readCustomEntry(item.content);
+
+              return (
+                <div className="text-sm text-slate-100">
+                  {hasText(entry.title) && <p className="font-medium">{entry.title}</p>}
+                  {hasText(entry.subtitle) && (
+                    <p className="text-slate-300">{entry.subtitle}</p>
+                  )}
+                  {hasText(entry.meta) && (
+                    <p className="text-slate-400">{entry.meta}</p>
+                  )}
+                  {hasText(entry.description) && (
+                    <p className="mt-2 whitespace-pre-wrap text-slate-200">
+                      {entry.description}
+                    </p>
+                  )}
+                </div>
+              );
+            },
+            <p className="text-sm text-slate-300">No entries yet.</p>,
+            {
+              gapClassName: "space-y-4",
+              compactItems: true,
+            }
           )}
         </div>
       </div>
@@ -142,7 +399,7 @@ export default function ModernTemplateOne({
   }
 
   function renderMainCustomSection(section: ResumeSection) {
-    const entries = getCustomEntries(section);
+    const items = getOrderedItems(section);
 
     return (
       <div>
@@ -151,37 +408,43 @@ export default function ModernTemplateOne({
         </h2>
         <div className="mt-4 h-px bg-slate-200" />
 
-        <div className="mt-6 space-y-8">
-          {entries.length === 0 ? (
-            <p className="text-[15px] leading-7 text-slate-500">
-              Add entries in the editor.
-            </p>
-          ) : (
-            entries.map((entry, index) => (
-              <div key={`${section.id}-${index}`}>
-                <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    {hasText(entry.title) && (
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        {entry.title}
-                      </h3>
-                    )}
+        <div className="mt-6">
+          {renderItemList(
+            section,
+            items,
+            (item) => {
+              const entry = readCustomEntry(item.content);
 
-                    {(hasText(entry.subtitle) || hasText(entry.meta)) && (
-                      <p className="text-slate-700">
-                        {[entry.subtitle, entry.meta].filter(Boolean).join(" • ")}
-                      </p>
-                    )}
+              return (
+                <div>
+                  <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      {hasText(entry.title) && (
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          {entry.title}
+                        </h3>
+                      )}
+
+                      {(hasText(entry.subtitle) || hasText(entry.meta)) && (
+                        <p className="text-slate-700">
+                          {[entry.subtitle, entry.meta].filter(Boolean).join(" • ")}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {hasText(entry.description) && (
-                  <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
-                    {entry.description}
-                  </p>
-                )}
-              </div>
-            ))
+                  {hasText(entry.description) && (
+                    <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
+                      {entry.description}
+                    </p>
+                  )}
+                </div>
+              );
+            },
+            <p className="text-[15px] leading-7 text-slate-500">Add entries in the editor.</p>,
+            {
+              gapClassName: "space-y-8",
+            }
           )}
         </div>
       </div>
@@ -257,69 +520,57 @@ export default function ModernTemplateOne({
           </>
         );
 
-      case "skills":
+      case "certifications": {
+        const items = getOrderedItems(section);
+
         return (
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
-              {getSectionTitle(data, "skills", "Skills")}
+              {section.title || "Certifications"}
             </h2>
 
-            <div className="mt-4 space-y-3">
-              {skillItems.length === 0 ? (
-                <p className="text-sm text-slate-300">No skills added yet.</p>
-              ) : (
-                skillItems.map((skill, index) => (
-                  <div key={`${skill.name}-${index}`} className="text-sm text-slate-100">
-                    <p className="font-medium">{skill.name}</p>
-                    {hasText(skill.level) && (
-                      <p className="text-slate-300">{skill.level}</p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        );
+            <div className="mt-4">
+              {renderItemList(
+                section,
+                items,
+                (item) => {
+                  const certification = readCertificationItem(item.content);
 
-      case "certifications":
-        return (
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
-              {getSectionTitle(data, "certifications", "Certifications")}
-            </h2>
-
-            <div className="mt-4 space-y-4 text-sm text-slate-100">
-              {certificationItems.length === 0 ? (
-                <p className="text-sm text-slate-300">
-                  No certifications added yet.
-                </p>
-              ) : (
-                certificationItems.map((certification, index) => (
-                  <div key={`${certification.name}-${index}`}>
-                    <p className="font-medium">{certification.name}</p>
-                    {hasText(certification.issuer) && (
-                      <p className="text-slate-300">{certification.issuer}</p>
-                    )}
-                    {hasText(certification.issueDate) && (
-                      <p className="text-slate-400">{certification.issueDate}</p>
-                    )}
-                    {hasText(certification.credentialId) && (
-                      <p className="break-words text-slate-400">
-                        ID: {certification.credentialId}
+                  return (
+                    <div className="text-sm text-slate-100">
+                      <p className="font-medium">
+                        {certification.name || "Certification"}
                       </p>
-                    )}
-                  </div>
-                ))
+                      {hasText(certification.issuer) && (
+                        <p className="text-slate-300">{certification.issuer}</p>
+                      )}
+                      {hasText(certification.issueDate) && (
+                        <p className="text-slate-400">{certification.issueDate}</p>
+                      )}
+                      {hasText(certification.credentialId) && (
+                        <p className="break-words text-slate-400">
+                          ID: {certification.credentialId}
+                        </p>
+                      )}
+                    </div>
+                  );
+                },
+                <p className="text-sm text-slate-300">No certifications added yet.</p>,
+                {
+                  gapClassName: "space-y-4",
+                  compactItems: true,
+                }
               )}
             </div>
           </div>
         );
+      }
 
       case "summary":
         return (
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
-              {getSectionTitle(data, "summary", "Profile")}
+              {section.title || "Profile"}
             </h2>
             <div className="mt-4 h-px bg-slate-700" />
             <p className="mt-6 whitespace-pre-wrap text-[15px] leading-7 text-slate-100">
@@ -352,7 +603,7 @@ export default function ModernTemplateOne({
         return (
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {getSectionTitle(data, "summary", "Profile")}
+              {section.title || "Profile"}
             </h2>
             <div className="mt-4 h-px bg-slate-200" />
             <p className="mt-6 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
@@ -362,207 +613,278 @@ export default function ModernTemplateOne({
           </div>
         );
 
-      case "experience":
+      case "experience": {
+        const items = getOrderedItems(section);
+
         return (
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {getSectionTitle(data, "experience", "Experience")}
+              {section.title || "Experience"}
             </h2>
             <div className="mt-4 h-px bg-slate-200" />
 
-            <div className="mt-6 space-y-8">
-              {experienceItems.length === 0 ? (
+            <div className="mt-6">
+              {renderItemList(
+                section,
+                items,
+                (item) => {
+                  const experience = readExperienceItem(item.content);
+
+                  return (
+                    <div>
+                      <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            {experience.role || "Role"}
+                          </h3>
+                          <p className="text-slate-700">
+                            {[experience.company, experience.location]
+                              .filter(Boolean)
+                              .join(" • ")}
+                          </p>
+                        </div>
+
+                        {hasText(
+                          formatDateRange(experience.startDate, experience.endDate)
+                        ) && (
+                          <p className="text-sm text-slate-500">
+                            {formatDateRange(
+                              experience.startDate,
+                              experience.endDate
+                            )}
+                          </p>
+                        )}
+                      </div>
+
+                      {hasText(experience.description) && (
+                        <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
+                          {experience.description}
+                        </p>
+                      )}
+                    </div>
+                  );
+                },
                 <p className="text-[15px] leading-7 text-slate-500">
                   Add experience entries in the editor.
-                </p>
-              ) : (
-                experienceItems.map((item, index) => (
-                  <div key={`${item.company}-${item.role}-${index}`}>
-                    <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          {item.role || "Role"}
-                        </h3>
-                        <p className="text-slate-700">
-                          {[item.company, item.location].filter(Boolean).join(" • ")}
-                        </p>
-                      </div>
-
-                      {hasText(formatDateRange(item.startDate, item.endDate)) && (
-                        <p className="text-sm text-slate-500">
-                          {formatDateRange(item.startDate, item.endDate)}
-                        </p>
-                      )}
-                    </div>
-
-                    {hasText(item.description) && (
-                      <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                ))
+                </p>,
+                {
+                  gapClassName: "space-y-8",
+                }
               )}
             </div>
           </div>
         );
+      }
 
-      case "education":
+      case "education": {
+        const items = getOrderedItems(section);
+
         return (
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {getSectionTitle(data, "education", "Education")}
+              {section.title || "Education"}
             </h2>
             <div className="mt-4 h-px bg-slate-200" />
 
-            <div className="mt-6 space-y-8">
-              {educationItems.length === 0 ? (
+            <div className="mt-6">
+              {renderItemList(
+                section,
+                items,
+                (item) => {
+                  const education = readEducationItem(item.content);
+
+                  return (
+                    <div>
+                      <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            {education.degree || "Degree"}
+                          </h3>
+                          <p className="text-slate-700">
+                            {[education.institution, education.location]
+                              .filter(Boolean)
+                              .join(" • ")}
+                          </p>
+                        </div>
+
+                        {hasText(
+                          formatDateRange(education.startDate, education.endDate)
+                        ) && (
+                          <p className="text-sm text-slate-500">
+                            {formatDateRange(education.startDate, education.endDate)}
+                          </p>
+                        )}
+                      </div>
+
+                      {hasText(education.description) && (
+                        <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
+                          {education.description}
+                        </p>
+                      )}
+                    </div>
+                  );
+                },
                 <p className="text-[15px] leading-7 text-slate-500">
                   Add education entries in the editor.
-                </p>
-              ) : (
-                educationItems.map((item, index) => (
-                  <div key={`${item.institution}-${item.degree}-${index}`}>
-                    <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          {item.degree || "Degree"}
-                        </h3>
-                        <p className="text-slate-700">
-                          {[item.institution, item.location].filter(Boolean).join(" • ")}
-                        </p>
-                      </div>
-
-                      {hasText(formatDateRange(item.startDate, item.endDate)) && (
-                        <p className="text-sm text-slate-500">
-                          {formatDateRange(item.startDate, item.endDate)}
-                        </p>
-                      )}
-                    </div>
-
-                    {hasText(item.description) && (
-                      <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                ))
+                </p>,
+                {
+                  gapClassName: "space-y-8",
+                }
               )}
             </div>
           </div>
         );
+      }
 
-      case "projects":
+      case "projects": {
+        const items = getOrderedItems(section);
+
         return (
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {getSectionTitle(data, "projects", "Projects")}
+              {section.title || "Projects"}
             </h2>
             <div className="mt-4 h-px bg-slate-200" />
 
-            <div className="mt-6 space-y-8">
-              {projectItems.length === 0 ? (
-                <p className="text-[15px] leading-7 text-slate-500">
-                  Add project entries in the editor.
-                </p>
-              ) : (
-                projectItems.map((item, index) => (
-                  <div key={`${item.name}-${item.role}-${index}`}>
-                    <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          {item.name || "Project"}
-                        </h3>
-                        <p className="text-slate-700">
-                          {[item.role, item.url].filter(Boolean).join(" • ")}
-                        </p>
+            <div className="mt-6">
+              {renderItemList(
+                section,
+                items,
+                (item) => {
+                  const project = readProjectItem(item.content);
+
+                  return (
+                    <div>
+                      <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            {project.name || "Project"}
+                          </h3>
+                          <p className="text-slate-700">
+                            {[project.role, project.url].filter(Boolean).join(" • ")}
+                          </p>
+                        </div>
+
+                        {hasText(
+                          formatDateRange(project.startDate, project.endDate)
+                        ) && (
+                          <p className="text-sm text-slate-500">
+                            {formatDateRange(project.startDate, project.endDate)}
+                          </p>
+                        )}
                       </div>
 
-                      {hasText(formatDateRange(item.startDate, item.endDate)) && (
-                        <p className="text-sm text-slate-500">
-                          {formatDateRange(item.startDate, item.endDate)}
+                      {hasText(project.description) && (
+                        <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
+                          {project.description}
                         </p>
                       )}
                     </div>
-
-                    {hasText(item.description) && (
-                      <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                ))
+                  );
+                },
+                <p className="text-[15px] leading-7 text-slate-500">
+                  Add project entries in the editor.
+                </p>,
+                {
+                  gapClassName: "space-y-8",
+                }
               )}
             </div>
           </div>
         );
+      }
 
-      case "skills":
+      case "skills": {
+        const items = getOrderedItems(section);
+
         return (
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {getSectionTitle(data, "skills", "Skills")}
+              {section.title || "Skills"}
             </h2>
             <div className="mt-4 h-px bg-slate-200" />
 
             <div className="mt-6 flex flex-wrap gap-3">
-              {skillItems.length === 0 ? (
+              {items.length === 0 ? (
                 <p className="text-[15px] leading-7 text-slate-500">
                   Add skills in the editor.
                 </p>
               ) : (
-                skillItems.map((skill, index) => (
-                  <div
-                    key={`${skill.name}-${index}`}
-                    className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700"
-                  >
-                    {skill.name}
-                    {hasText(skill.level) ? ` • ${skill.level}` : ""}
-                  </div>
-                ))
+                items.map((item) => {
+                  const skill = isRecord(item.content)
+                    ? {
+                        name: readString(item.content.name),
+                        level: readString(item.content.level),
+                      }
+                    : { name: "", level: "" };
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700"
+                    >
+                      {skill.name}
+                      {hasText(skill.level) ? ` • ${skill.level}` : ""}
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
         );
+      }
 
-      case "certifications":
+      case "certifications": {
+        const items = getOrderedItems(section);
+
         return (
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {getSectionTitle(data, "certifications", "Certifications")}
+              {section.title || "Certifications"}
             </h2>
             <div className="mt-4 h-px bg-slate-200" />
 
-            <div className="mt-6 space-y-6">
-              {certificationItems.length === 0 ? (
+            <div className="mt-6">
+              {renderItemList(
+                section,
+                items,
+                (item) => {
+                  const certification = readCertificationItem(item.content);
+
+                  return (
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {certification.name || "Certification"}
+                      </h3>
+                      <p className="mt-1 text-slate-700">
+                        {[certification.issuer, certification.issueDate]
+                          .filter(Boolean)
+                          .join(" • ")}
+                      </p>
+                      {hasText(certification.credentialId) && (
+                        <p className="mt-1 text-sm text-slate-500">
+                          Credential ID: {certification.credentialId}
+                        </p>
+                      )}
+                      {hasText(certification.url) && (
+                        <p className="mt-1 break-words text-sm text-slate-500">
+                          {certification.url}
+                        </p>
+                      )}
+                    </div>
+                  );
+                },
                 <p className="text-[15px] leading-7 text-slate-500">
                   Add certifications in the editor.
-                </p>
-              ) : (
-                certificationItems.map((item, index) => (
-                  <div key={`${item.name}-${index}`}>
-                    <h3 className="text-lg font-semibold text-slate-900">
-                      {item.name || "Certification"}
-                    </h3>
-                    <p className="mt-1 text-slate-700">
-                      {[item.issuer, item.issueDate].filter(Boolean).join(" • ")}
-                    </p>
-                    {hasText(item.credentialId) && (
-                      <p className="mt-1 text-sm text-slate-500">
-                        Credential ID: {item.credentialId}
-                      </p>
-                    )}
-                    {hasText(item.url) && (
-                      <p className="mt-1 break-words text-sm text-slate-500">
-                        {item.url}
-                      </p>
-                    )}
-                  </div>
-                ))
+                </p>,
+                {
+                  gapClassName: "space-y-6",
+                }
               )}
             </div>
           </div>
         );
+      }
 
       case "personal-details":
         return (
@@ -591,16 +913,18 @@ export default function ModernTemplateOne({
   }
 
   function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
-    const isDragged = draggedSectionId === section.id;
-    const isDropTarget = dropTargetSectionId === section.id;
+    const isDraggedSection = draggedSectionId === section.id;
+    const isDropTargetSection = dropTargetSectionId === section.id;
+
+    const sectionDropEnabled = editable && !draggedItem;
 
     const interactiveClasses = editable
       ? zone === "sidebar"
-        ? "cursor-move ring-1 ring-transparent transition hover:ring-white/20"
-        : "cursor-move ring-1 ring-transparent transition hover:ring-slate-300"
+        ? "ring-1 ring-transparent transition hover:ring-white/20"
+        : "ring-1 ring-transparent transition hover:ring-slate-300"
       : "";
 
-    const dropClasses = isDropTarget
+    const dropClasses = isDropTargetSection
       ? zone === "sidebar"
         ? "ring-2 ring-white/60"
         : "ring-2 ring-slate-400"
@@ -609,36 +933,53 @@ export default function ModernTemplateOne({
     return (
       <div
         key={section.id}
-        draggable={editable}
-        onDragStart={
-          editable ? () => onSectionDragStart?.(section.id) : undefined
-        }
         onDragEnter={
-          editable ? () => onSectionDragEnter?.(section.id) : undefined
+          sectionDropEnabled
+            ? (event) => {
+                event.preventDefault();
+                onSectionDragEnter?.(section.id);
+              }
+            : undefined
         }
         onDragOver={
-          editable
+          sectionDropEnabled
             ? (event) => {
                 event.preventDefault();
               }
             : undefined
         }
         onDrop={
-          editable
+          sectionDropEnabled
             ? (event) => {
                 event.preventDefault();
                 onSectionDrop?.(section.id);
               }
             : undefined
         }
-        onDragEnd={editable ? () => onSectionDragEnd?.() : undefined}
         className={`rounded-2xl px-2 py-2 ${interactiveClasses} ${dropClasses} ${
-          isDragged ? "opacity-60" : ""
+          isDraggedSection ? "opacity-60" : ""
         }`}
       >
         {editable && (
-          <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-slate-400">
-            Drag section
+          <div className="mb-3 flex items-center gap-2">
+            <div
+              draggable
+              onDragStart={(event) => {
+                event.stopPropagation();
+                onSectionDragStart?.(section.id);
+              }}
+              onDragEnd={(event) => {
+                event.stopPropagation();
+                onSectionDragEnd?.();
+              }}
+              className={`inline-flex cursor-grab rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.2em] active:cursor-grabbing ${
+                zone === "sidebar"
+                  ? "border-white/20 text-slate-300"
+                  : "border-slate-300 text-slate-500"
+              }`}
+            >
+              Drag section
+            </div>
           </div>
         )}
 
@@ -657,14 +998,14 @@ export default function ModernTemplateOne({
             editable ? "min-h-[1100px]" : ""
           }`}
           onDragOver={
-            editable
+            editable && !draggedItem
               ? (event) => {
                   event.preventDefault();
                 }
               : undefined
           }
           onDrop={
-            editable
+            editable && !draggedItem
               ? (event) => {
                   event.preventDefault();
                   onZoneDrop?.("sidebar");
@@ -680,14 +1021,14 @@ export default function ModernTemplateOne({
         <section
           className={`px-8 py-10 md:px-10 ${editable ? "min-h-[1100px]" : ""}`}
           onDragOver={
-            editable
+            editable && !draggedItem
               ? (event) => {
                   event.preventDefault();
                 }
               : undefined
           }
           onDrop={
-            editable
+            editable && !draggedItem
               ? (event) => {
                   event.preventDefault();
                   onZoneDrop?.("main");
