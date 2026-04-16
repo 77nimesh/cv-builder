@@ -25,6 +25,7 @@ export const resumeSectionOrder: ResumeSectionType[] = [
 
 export const defaultPersonalDetails: PersonalDetails = {
   fullName: "",
+  headline: "Professional Resume",
   email: "",
   phone: "",
   location: "",

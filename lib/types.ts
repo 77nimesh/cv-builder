@@ -2,6 +2,7 @@ export type ResumeZone = "main" | "sidebar";
 
 export type PersonalDetails = {
   fullName: string;
+  headline: string;
   email: string;
   phone: string;
   location: string;

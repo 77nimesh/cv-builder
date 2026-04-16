@@ -69,6 +69,29 @@ function readPhotoShape(
   return value === "circle" ? "circle" : fallback;
 }
 
+function isBrokenGeneratedId(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return true;
+  }
+
+  return (
+    trimmed.includes("<span class=\"katex\">") ||
+    trimmed.includes("katex-mathml") ||
+    trimmed.includes("{fallbackPrefix}") ||
+    trimmed.includes("{fallbackPosition") ||
+    trimmed.includes("{start}") ||
+    trimmed.includes("{end}") ||
+    trimmed.includes("<math ") ||
+    trimmed.includes("</span>")
+  );
+}
+
+function buildSafeItemId(prefix: string, position: number) {
+  return `${prefix}-${position + 1}`;
+}
+
 function normalizePersonalDetailsContent(value: unknown): PersonalDetails {
   if (!isRecord(value)) {
     return { ...defaultPersonalDetails };
@@ -76,6 +99,7 @@ function normalizePersonalDetailsContent(value: unknown): PersonalDetails {
 
   return {
     fullName: readString(value.fullName),
+    headline: readString(value.headline, defaultPersonalDetails.headline),
     email: readString(value.email),
     phone: readString(value.phone),
     location: readString(value.location),
@@ -188,7 +212,11 @@ function buildNormalizedItem(
   fallbackPrefix: string
 ): ResumeSectionItem {
   const itemRecord = isRecord(rawItem) ? rawItem : null;
-  const id = readString(itemRecord?.id, `${fallbackPrefix}-${fallbackPosition + 1}`);
+  const rawId = readString(itemRecord?.id);
+  const id = isBrokenGeneratedId(rawId)
+    ? buildSafeItemId(fallbackPrefix, fallbackPosition)
+    : rawId;
+
   const position = readPosition(itemRecord?.position, fallbackPosition);
   const rawContent = itemRecord?.content ?? rawItem;
 
@@ -279,16 +307,32 @@ function normalizeSectionItems(
     return [];
   }
 
+  const seenIds = new Set<string>();
+
   return rawItems
     .map((item, index) =>
       buildNormalizedItem(sectionType, item, index, fallbackPrefix)
     )
     .sort((left, right) => left.position - right.position)
-    .map((item, index) => ({
-      ...item,
-      position: index,
-      id: item.id || `${fallbackPrefix}-${index + 1}`,
-    }));
+    .map((item, index) => {
+      let nextId = item.id;
+
+      if (isBrokenGeneratedId(nextId) || seenIds.has(nextId)) {
+        nextId = buildSafeItemId(fallbackPrefix, index);
+      }
+
+      while (seenIds.has(nextId)) {
+        nextId = `${buildSafeItemId(fallbackPrefix, index)}-${seenIds.size + 1}`;
+      }
+
+      seenIds.add(nextId);
+
+      return {
+        ...item,
+        position: index,
+        id: nextId,
+      };
+    });
 }
 
 function normalizeCanonicalSection(

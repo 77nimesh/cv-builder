@@ -339,6 +339,15 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
           </div>
 
           <div>
+            <label className="mb-2 block text-sm font-medium">Headline / Subtitle</label>
+            <input
+              {...register("data.personal.headline")}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+              placeholder="AI & Computer Vision Trainee / Automotive Technician"
+            />
+          </div>
+
+          <div>
             <label className="mb-2 block text-sm font-medium">Email</label>
             <input
               {...register("data.personal.email")}

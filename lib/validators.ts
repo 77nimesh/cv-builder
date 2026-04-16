@@ -65,6 +65,7 @@ export const resumeFormSchema = z.object({
   data: z.object({
     personal: z.object({
       fullName: z.string(),
+      headline: z.string(),
       email: z.string(),
       phone: z.string(),
       location: z.string(),

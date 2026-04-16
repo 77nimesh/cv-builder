@@ -243,92 +243,92 @@ export default function ModernTemplateOne({
     );
   }
 
-  function renderItemShell(
-    section: ResumeSection,
-    item: ResumeSectionItem,
-    content: React.ReactNode,
-    options: { compact?: boolean } = {}
-  ) {
-    const itemDragEnabled = editable && supportsItemDrag(section);
-    const isDraggedItem =
-      draggedItem?.sectionId === section.id && draggedItem.itemId === item.id;
-    const isDropTargetItem =
-      dropTargetItem?.sectionId === section.id && dropTargetItem.itemId === item.id;
+function renderItemShell(
+  section: ResumeSection,
+  item: ResumeSectionItem,
+  content: React.ReactNode,
+  options: { compact?: boolean } = {}
+) {
+  const itemDragEnabled = editable && supportsItemDrag(section);
+  const isDraggedItem =
+    draggedItem?.sectionId === section.id && draggedItem.itemId === item.id;
+  const isDropTargetItem =
+    dropTargetItem?.sectionId === section.id && dropTargetItem.itemId === item.id;
 
-    const shellClasses = options.compact
-      ? "rounded-xl px-2 py-2 print:px-0 print:py-0"
-      : "rounded-xl px-3 py-3 print:px-0 print:py-0";
+  const shellClasses = options.compact
+    ? "rounded-xl px-2 py-2 print:px-0 print:py-0"
+    : "rounded-xl px-3 py-3 print:px-0 print:py-0";
 
-    const hoverClasses = itemDragEnabled
-      ? section.zone === "sidebar"
-        ? "ring-1 ring-transparent transition hover:ring-white/20"
-        : "ring-1 ring-transparent transition hover:ring-slate-300"
-      : "";
+  const hoverClasses = itemDragEnabled
+    ? section.zone === "sidebar"
+      ? "ring-1 ring-transparent transition hover:ring-white/20"
+      : "ring-1 ring-transparent transition hover:ring-slate-300"
+    : "";
 
-    const dropClasses = isDropTargetItem
-      ? section.zone === "sidebar"
-        ? "ring-2 ring-white/60"
-        : "ring-2 ring-slate-400"
-      : "";
+  const dropClasses = isDropTargetItem
+    ? section.zone === "sidebar"
+      ? "ring-2 ring-white/60"
+      : "ring-2 ring-slate-400"
+    : "";
 
-    return (
-      <div
-        key={item.id}
-        className={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mi>h</mi><mi>e</mi><mi>l</mi><mi>l</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{shellClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">h</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{hoverClasses} <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>r</mi><mi>o</mi><mi>p</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{dropClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.07153em;">pC</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{
-          isDraggedItem ? "opacity-60" : ""
-        }`}
-        onDragEnter={
-          itemDragEnabled
-            ? (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onItemDragEnter?.(section.id, item.id);
-              }
-            : undefined
-        }
-        onDragOver={
-          itemDragEnabled
-            ? (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-              }
-            : undefined
-        }
-        onDrop={
-          itemDragEnabled
-            ? (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onItemDrop?.(section.id, item.id);
-              }
-            : undefined
-        }
-      >
-        {itemDragEnabled && (
-          <div
-            draggable
-            onDragStart={(event) => {
+  const dragStateClass = isDraggedItem ? "opacity-60" : "";
+
+  return (
+    <div
+      key={`${section.id}-${item.position}-${item.id}`}
+      className={`${shellClasses} ${hoverClasses} ${dropClasses} ${dragStateClass}`}
+      onDragEnter={
+        itemDragEnabled
+          ? (event) => {
+              event.preventDefault();
               event.stopPropagation();
-              onItemDragStart?.(section.id, item.id);
-            }}
-            onDragEnd={(event) => {
+              onItemDragEnter?.(section.id, item.id);
+            }
+          : undefined
+      }
+      onDragOver={
+        itemDragEnabled
+          ? (event) => {
+              event.preventDefault();
               event.stopPropagation();
-              onItemDragEnd?.();
-            }}
-            className={`mb-3 inline-flex cursor-grab rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.2em] active:cursor-grabbing print:hidden ${
-              section.zone === "sidebar"
-                ? "border-white/20 text-slate-300"
-                : "border-slate-300 text-slate-500"
-            }`}
-          >
-            Drag item
-          </div>
-        )}
+            }
+          : undefined
+      }
+      onDrop={
+        itemDragEnabled
+          ? (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onItemDrop?.(section.id, item.id);
+            }
+          : undefined
+      }
+    >
+      {itemDragEnabled && (
+        <div
+          draggable
+          onDragStart={(event) => {
+            event.stopPropagation();
+            onItemDragStart?.(section.id, item.id);
+          }}
+          onDragEnd={(event) => {
+            event.stopPropagation();
+            onItemDragEnd?.();
+          }}
+          className={`mb-3 inline-flex cursor-grab rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.2em] active:cursor-grabbing print:hidden ${
+            section.zone === "sidebar"
+              ? "border-white/20 text-slate-300"
+              : "border-slate-300 text-slate-500"
+          }`}
+        >
+          Drag item
+        </div>
+      )}
 
-        <div className="print-avoid-break">{content}</div>
-      </div>
-    );
-  }
+      <div className="print-avoid-break">{content}</div>
+    </div>
+  );
+}
 
   function renderItemList(
     section: ResumeSection,
@@ -486,9 +486,11 @@ export default function ModernTemplateOne({
               <h1 className="break-words text-3xl font-bold leading-tight">
                 {personal.fullName || "Your Name"}
               </h1>
-              <p className="mt-2 text-sm uppercase tracking-[0.2em] text-slate-300">
-                Professional Resume
-              </p>
+              {hasText(personal.headline) ? (
+                <p className="mt-2 text-sm uppercase tracking-[0.2em] text-slate-300">
+                  {personal.headline}
+                </p>
+              ) : null}
             </div>
 
             <div className="mt-10">
@@ -821,44 +823,44 @@ export default function ModernTemplateOne({
       }
 
       case "skills": {
-        const items = getOrderedItems(section);
+  const items = getOrderedItems(section);
 
-        return (
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {section.title || "Skills"}
-            </h2>
-            <div className="mt-4 h-px bg-slate-200" />
+  return (
+    <div>
+      <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+        {section.title || "Skills"}
+      </h2>
+      <div className="mt-4 h-px bg-slate-200" />
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              {items.length === 0 ? (
-                <p className="text-[15px] leading-7 text-slate-500">
-                  Add skills in the editor.
-                </p>
-              ) : (
-                items.map((item) => {
-                  const skill = isRecord(item.content)
-                    ? {
-                        name: readString(item.content.name),
-                        level: readString(item.content.level),
-                      }
-                    : { name: "", level: "" };
+      <div className="mt-6 flex flex-wrap gap-3">
+        {items.length === 0 ? (
+          <p className="text-[15px] leading-7 text-slate-500">
+            Add skills in the editor.
+          </p>
+        ) : (
+          items.map((item, index) => {
+            const skill = isRecord(item.content)
+              ? {
+                  name: readString(item.content.name),
+                  level: readString(item.content.level),
+                }
+              : { name: "", level: "" };
 
-                  return (
-                    <div
-                      key={item.id}
-                      className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700"
-                    >
-                      {skill.name}
-                      {hasText(skill.level) ? `  |  ${skill.level}` : ""}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        );
-      }
+            return (
+              <div
+                key={`${section.id}-${index}-${item.id}`}
+                className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700"
+              >
+                {skill.name}
+                {hasText(skill.level) ? `  |  ${skill.level}` : ""}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
 
       case "certifications": {
         const items = getOrderedItems(section);
@@ -917,7 +919,19 @@ export default function ModernTemplateOne({
           <div>
             {renderProfilePhoto("main")}
 
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            {hasText(personal.fullName) ? (
+              <h1 className="break-words text-3xl font-bold leading-tight text-slate-900">
+                {personal.fullName}
+              </h1>
+            ) : null}
+
+            {hasText(personal.headline) ? (
+              <p className="mt-2 text-sm uppercase tracking-[0.2em] text-slate-500">
+                {personal.headline}
+              </p>
+            ) : null}
+
+            <h2 className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
               Contact
             </h2>
             <div className="mt-4 h-px bg-slate-200" />
@@ -940,83 +954,83 @@ export default function ModernTemplateOne({
     }
   }
 
-  function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
-    const isDraggedSection = draggedSectionId === section.id;
-    const isDropTargetSection = dropTargetSectionId === section.id;
+function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
+  const isDraggedSection = draggedSectionId === section.id;
+  const isDropTargetSection = dropTargetSectionId === section.id;
 
-    const sectionDropEnabled = editable && !draggedItem;
+  const sectionDropEnabled = editable && !draggedItem;
 
-    const interactiveClasses = editable
-      ? zone === "sidebar"
-        ? "ring-1 ring-transparent transition hover:ring-white/20"
-        : "ring-1 ring-transparent transition hover:ring-slate-300"
-      : "";
+  const interactiveClasses = editable
+    ? zone === "sidebar"
+      ? "ring-1 ring-transparent transition hover:ring-white/20"
+      : "ring-1 ring-transparent transition hover:ring-slate-300"
+    : "";
 
-    const dropClasses = isDropTargetSection
-      ? zone === "sidebar"
-        ? "ring-2 ring-white/60"
-        : "ring-2 ring-slate-400"
-      : "";
+  const dropClasses = isDropTargetSection
+    ? zone === "sidebar"
+      ? "ring-2 ring-white/60"
+      : "ring-2 ring-slate-400"
+    : "";
 
-    return (
-      <div
-        key={section.id}
-        onDragEnter={
-          sectionDropEnabled
-            ? (event) => {
-                event.preventDefault();
-                onSectionDragEnter?.(section.id);
-              }
-            : undefined
-        }
-        onDragOver={
-          sectionDropEnabled
-            ? (event) => {
-                event.preventDefault();
-              }
-            : undefined
-        }
-        onDrop={
-          sectionDropEnabled
-            ? (event) => {
-                event.preventDefault();
-                onSectionDrop?.(section.id);
-              }
-            : undefined
-        }
-        className={`rounded-2xl px-2 py-2 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>n</mi><mi>t</mi><mi>e</mi><mi>r</mi><mi>a</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>v</mi><mi>e</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{interactiveClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">er</span><span class="mord mathnormal">a</span><span class="mord mathnormal">c</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{dropClasses} ${
-          isDraggedSection ? "opacity-60" : ""
-        }`}
-      >
-        {editable && (
-          <div className="mb-3 flex items-center gap-2">
-            <div
-              draggable
-              onDragStart={(event) => {
-                event.stopPropagation();
-                onSectionDragStart?.(section.id);
-              }}
-              onDragEnd={(event) => {
-                event.stopPropagation();
-                onSectionDragEnd?.();
-              }}
-              className={`inline-flex cursor-grab rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.2em] active:cursor-grabbing ${
-                zone === "sidebar"
-                  ? "border-white/20 text-slate-300"
-                  : "border-slate-300 text-slate-500"
-              }`}
-            >
-              Drag section
-            </div>
+  const dragStateClass = isDraggedSection ? "opacity-60" : "";
+
+  return (
+    <div
+      key={section.id}
+      onDragEnter={
+        sectionDropEnabled
+          ? (event) => {
+              event.preventDefault();
+              onSectionDragEnter?.(section.id);
+            }
+          : undefined
+      }
+      onDragOver={
+        sectionDropEnabled
+          ? (event) => {
+              event.preventDefault();
+            }
+          : undefined
+      }
+      onDrop={
+        sectionDropEnabled
+          ? (event) => {
+              event.preventDefault();
+              onSectionDrop?.(section.id);
+            }
+          : undefined
+      }
+      className={`rounded-2xl px-2 py-2 ${interactiveClasses} ${dropClasses} ${dragStateClass}`}
+    >
+      {editable && (
+        <div className="mb-3 flex items-center gap-2">
+          <div
+            draggable
+            onDragStart={(event) => {
+              event.stopPropagation();
+              onSectionDragStart?.(section.id);
+            }}
+            onDragEnd={(event) => {
+              event.stopPropagation();
+              onSectionDragEnd?.();
+            }}
+            className={`inline-flex cursor-grab rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.2em] active:cursor-grabbing ${
+              zone === "sidebar"
+                ? "border-white/20 text-slate-300"
+                : "border-slate-300 text-slate-500"
+            }`}
+          >
+            Drag section
           </div>
-        )}
+        </div>
+      )}
 
-        {zone === "sidebar"
-          ? renderSidebarSection(section)
-          : renderMainSection(section)}
-      </div>
-    );
-  }
+      {zone === "sidebar"
+        ? renderSidebarSection(section)
+        : renderMainSection(section)}
+    </div>
+  );
+}
 
   return (
     <div className="mx-auto w-full max-w-[850px] rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 print:max-w-none print:rounded-none print:bg-transparent print:shadow-none print:ring-0">

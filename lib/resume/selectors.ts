@@ -79,6 +79,7 @@ export function getPersonalDetails(data: ResumeData): PersonalDetails {
 
   return {
     fullName: readString(personalContent.fullName, defaultPersonalDetails.fullName),
+    headline: readString(personalContent.headline, defaultPersonalDetails.headline),
     email: readString(personalContent.email, defaultPersonalDetails.email),
     phone: readString(personalContent.phone, defaultPersonalDetails.phone),
     location: readString(personalContent.location, defaultPersonalDetails.location),
