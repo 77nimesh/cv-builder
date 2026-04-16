@@ -3,7 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 const ALLOWED_MIME_TYPES = new Map<string, string>([
   ["image/jpeg", ".jpg"],
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
       return NextResponse.json(
-        { error: "Photo must be 5MB or smaller" },
+        { error: "Photo must be 10MB or smaller" },
         { status: 400 }
       );
     }
