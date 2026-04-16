@@ -51,7 +51,7 @@ function formatDateRange(startDate: string, endDate: string) {
   const end = endDate.trim();
 
   if (start && end) {
-    return `${start} — ${end}`;
+    return start + " - " + end;
   }
 
   if (start) {
@@ -214,6 +214,7 @@ export default function ModernTemplateOne({
   const summary = getSummaryText(data);
   const visibleSections = getVisibleSections(data);
   const normalizedPhotoPath = photoPath?.trim() ?? "";
+  const photoShape = data.layout.photoShape === "circle" ? "circle" : "square";
 
   const sidebarSections = visibleSections.filter(
     (section) => section.zone === "sidebar"
@@ -225,15 +226,17 @@ export default function ModernTemplateOne({
       return null;
     }
 
+    const shapeClass = photoShape === "circle" ? "rounded-full" : "rounded-2xl";
+
     return (
-      <div className={variant === "sidebar" ? "mb-6" : "mb-6"}>
+      <div className={variant === "sidebar" ? "mb-8" : "mb-8"}>
         <img
           src={normalizedPhotoPath}
           alt={personal.fullName ? `${personal.fullName} profile photo` : "Profile photo"}
           className={
             variant === "sidebar"
-              ? "h-28 w-28 rounded-2xl border border-white/10 object-cover"
-              : "h-24 w-24 rounded-2xl border border-slate-200 object-cover"
+              ? `h-52 w-52 border border-white/10 object-cover ${shapeClass}`
+              : `h-36 w-36 border border-slate-200 object-cover ${shapeClass}`
           }
         />
       </div>
@@ -271,7 +274,7 @@ export default function ModernTemplateOne({
     return (
       <div
         key={item.id}
-        className={`${shellClasses} ${hoverClasses} ${dropClasses} ${
+        className={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mi>h</mi><mi>e</mi><mi>l</mi><mi>l</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{shellClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">h</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{hoverClasses} <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>r</mi><mi>o</mi><mi>p</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{dropClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.07153em;">pC</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{
           isDraggedItem ? "opacity-60" : ""
         }`}
         onDragEnter={
@@ -448,7 +451,7 @@ export default function ModernTemplateOne({
 
                       {(hasText(entry.subtitle) || hasText(entry.meta)) && (
                         <p className="text-slate-700">
-                          {[entry.subtitle, entry.meta].filter(Boolean).join(" • ")}
+                          {[entry.subtitle, entry.meta].filter(Boolean).join("  |  ")}
                         </p>
                       )}
                     </div>
@@ -663,7 +666,7 @@ export default function ModernTemplateOne({
                           <p className="text-slate-700">
                             {[experience.company, experience.location]
                               .filter(Boolean)
-                              .join(" • ")}
+                              .join("  |  ")}
                           </p>
                         </div>
 
@@ -726,7 +729,7 @@ export default function ModernTemplateOne({
                           <p className="text-slate-700">
                             {[education.institution, education.location]
                               .filter(Boolean)
-                              .join(" • ")}
+                              .join("  |  ")}
                           </p>
                         </div>
 
@@ -784,7 +787,7 @@ export default function ModernTemplateOne({
                             {project.name || "Project"}
                           </h3>
                           <p className="text-slate-700">
-                            {[project.role, project.url].filter(Boolean).join(" • ")}
+                            {[project.role, project.url].filter(Boolean).join("  |  ")}
                           </p>
                         </div>
 
@@ -847,7 +850,7 @@ export default function ModernTemplateOne({
                       className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700"
                     >
                       {skill.name}
-                      {hasText(skill.level) ? ` • ${skill.level}` : ""}
+                      {hasText(skill.level) ? `  |  ${skill.level}` : ""}
                     </div>
                   );
                 })
@@ -882,7 +885,7 @@ export default function ModernTemplateOne({
                       <p className="mt-1 text-slate-700">
                         {[certification.issuer, certification.issueDate]
                           .filter(Boolean)
-                          .join(" • ")}
+                          .join("  |  ")}
                       </p>
                       {hasText(certification.credentialId) && (
                         <p className="mt-1 text-sm text-slate-500">
@@ -981,7 +984,7 @@ export default function ModernTemplateOne({
               }
             : undefined
         }
-        className={`rounded-2xl px-2 py-2 ${interactiveClasses} ${dropClasses} ${
+        className={`rounded-2xl px-2 py-2 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>n</mi><mi>t</mi><mi>e</mi><mi>r</mi><mi>a</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>v</mi><mi>e</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{interactiveClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">er</span><span class="mord mathnormal">a</span><span class="mord mathnormal">c</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{dropClasses} ${
           isDraggedSection ? "opacity-60" : ""
         }`}
       >

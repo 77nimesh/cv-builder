@@ -9,6 +9,8 @@ export type PersonalDetails = {
   website: string;
 };
 
+export type ResumePhotoShape = "square" | "circle";
+
 export type ExperienceItem = {
   company: string;
   role: string;
@@ -96,6 +98,7 @@ export type ResumeLayout = {
   template: string;
   themeColor: string | null;
   fontFamily: string | null;
+  photoShape: ResumePhotoShape;
 };
 
 export type ResumeSectionItem = {

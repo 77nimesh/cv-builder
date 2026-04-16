@@ -24,6 +24,7 @@ function hasCanonicalSectionsPayload(value: unknown): value is {
   themeColor?: string | null;
   fontFamily?: string | null;
   photoPath?: string | null;
+  photoShape?: string | null;
   data: { sections: unknown[] };
 } {
   if (typeof value !== "object" || value === null) {
@@ -81,11 +82,18 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       const themeColor = readNullableString(rawBody.themeColor);
       const fontFamily = readNullableString(rawBody.fontFamily);
       const photoPath = readNullableString(rawBody.photoPath);
+      const photoShape =
+        rawBody.photoShape === "circle"
+          ? "circle"
+          : rawBody.photoShape === "square"
+            ? "square"
+            : undefined;
 
       const data = normalizeResumeData(rawBody.data, {
         template,
         themeColor,
         fontFamily,
+        photoShape,
       });
 
       const updatedResume = await prisma.resume.update({
@@ -116,6 +124,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       template: body.template,
       themeColor: body.themeColor ?? null,
       fontFamily: body.fontFamily ?? null,
+      photoShape: body.photoShape === "circle" ? "circle" : "square",
     });
 
     const updatedResume = await prisma.resume.update({

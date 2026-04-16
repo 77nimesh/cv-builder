@@ -10,6 +10,7 @@ import type {
   ResumeFormData,
   ResumeSectionType,
   SkillItem,
+  ResumePhotoShape,
 } from "@/lib/types";
 
 export const resumeSectionOrder: ResumeSectionType[] = [
@@ -79,7 +80,7 @@ export const defaultCustomSectionEntry: CustomSectionEntry = {
 };
 
 function createId(prefix: string) {
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+  return `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>p</mi><mi>r</mi><mi>e</mi><mi>f</mi><mi>i</mi><mi>x</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{prefix}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">i</span><span class="mord mathnormal">x</span></span><span class="mord">−</span></span></span></span>{Math.random().toString(36).slice(2, 10)}`;
 }
 
 export function createEmptyCustomSectionFormSection(): CustomSectionFormSection {
@@ -107,6 +108,7 @@ type CreateDefaultResumeDataOptions = {
   template?: string;
   themeColor?: string | null;
   fontFamily?: string | null;
+  photoShape?: ResumePhotoShape;
   language?: string;
   targetRole?: string;
 };
@@ -125,6 +127,7 @@ export function createDefaultResumeData(
       template,
       themeColor: options.themeColor ?? null,
       fontFamily: options.fontFamily ?? null,
+      photoShape: options.photoShape ?? "square",
     },
     sections: [
       {

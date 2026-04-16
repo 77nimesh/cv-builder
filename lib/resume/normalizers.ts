@@ -13,6 +13,7 @@ import type {
   ResumeSectionType,
   ResumeZone,
   SkillItem,
+  ResumePhotoShape,
 } from "@/lib/types";
 import {
   createDefaultResumeData,
@@ -29,6 +30,7 @@ type ResumeNormalizationOptions = {
   template?: string | null;
   themeColor?: string | null;
   fontFamily?: string | null;
+  photoShape?: ResumePhotoShape | null;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -58,6 +60,13 @@ function readPosition(value: unknown, fallback: number): number {
 
 function readZone(value: unknown, fallback: ResumeZone): ResumeZone {
   return value === "main" || value === "sidebar" ? value : fallback;
+}
+
+function readPhotoShape(
+  value: unknown,
+  fallback: ResumePhotoShape = "square"
+): ResumePhotoShape {
+  return value === "circle" ? "circle" : fallback;
 }
 
 function normalizePersonalDetailsContent(value: unknown): PersonalDetails {
@@ -330,6 +339,7 @@ function normalizeCanonicalResumeData(
     template: options.template ?? undefined,
     themeColor: options.themeColor ?? null,
     fontFamily: options.fontFamily ?? null,
+    photoShape: options.photoShape ?? undefined,
   });
 
   const meta = isRecord(value.meta) ? value.meta : {};
@@ -372,6 +382,10 @@ function normalizeCanonicalResumeData(
       fontFamily: readNullableString(
         options.fontFamily !== undefined ? options.fontFamily : layout.fontFamily
       ),
+      photoShape: readPhotoShape(
+        options.photoShape !== undefined ? options.photoShape : layout.photoShape,
+        defaults.layout.photoShape
+      ),
     },
     sections: [...builtInSections, ...customSections]
       .sort((left, right) => left.position - right.position)
@@ -386,23 +400,35 @@ export function isCanonicalResumeData(value: unknown): value is ResumeData {
   return isRecord(value) && Array.isArray(value.sections);
 }
 
+function getCustomSectionId(
+  section: CustomSectionFormSection,
+  startPosition: number,
+  index: number
+) {
+  return section.id || `custom-${startPosition + index + 1}`;
+}
+
 function buildCustomSectionsFromFormData(
   customSections: CustomSectionFormSection[],
   startPosition: number
 ): ResumeSection[] {
-  return customSections.map((section, index) => ({
-    id: section.id || `custom-${startPosition + index + 1}`,
-    type: "custom" as const,
-    title: readString(section.title, "Custom Section"),
-    zone: readZone(section.zone, "main"),
-    position: startPosition + index,
-    visible: readBoolean(section.visible, true),
-    items: normalizeSectionItems(
-      "custom",
-      section.entries,
-      `${section.id || `custom-${startPosition + index + 1}`}-entry`
-    ),
-  }));
+  return customSections.map((section, index) => {
+    const sectionId = getCustomSectionId(section, startPosition, index);
+
+    return {
+      id: sectionId,
+      type: "custom" as const,
+      title: readString(section.title, "Custom Section"),
+      zone: readZone(section.zone, "main"),
+      position: startPosition + index,
+      visible: readBoolean(section.visible, true),
+      items: normalizeSectionItems(
+        "custom",
+        section.entries,
+        `${sectionId}-entry`
+      ),
+    };
+  });
 }
 
 export function buildResumeDataFromFormData(
@@ -413,6 +439,7 @@ export function buildResumeDataFromFormData(
     template: options.template ?? undefined,
     themeColor: options.themeColor ?? null,
     fontFamily: options.fontFamily ?? null,
+    photoShape: options.photoShape ?? undefined,
   });
 
   const sections = defaults.sections.map((section) => {

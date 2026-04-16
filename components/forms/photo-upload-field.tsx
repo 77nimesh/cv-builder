@@ -8,12 +8,16 @@ const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 type PhotoUploadFieldProps = {
   photoPath: string;
+  photoShape: "square" | "circle";
   onChange: (photoPath: string) => void;
+  onPhotoShapeChange: (photoShape: "square" | "circle") => void;
 };
 
 export default function PhotoUploadField({
   photoPath,
+  photoShape,
   onChange,
+  onPhotoShapeChange,
 }: PhotoUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -93,7 +97,7 @@ export default function PhotoUploadField({
             <p className="mt-1 text-sm text-slate-500">
               Upload JPG, PNG, or WebP up to 10MB. After selecting a photo, crop the
               required area and drag to reposition it before upload. Save the resume
-              after upload to persist the photo path.
+              after upload to persist the photo path and display style.
             </p>
           </div>
 
@@ -131,18 +135,87 @@ export default function PhotoUploadField({
           </div>
         </div>
 
-        <div className="mt-5">
-          {photoPath ? (
-            <img
-              src={photoPath}
-              alt="Profile preview"
-              className="h-32 w-32 rounded-2xl border border-slate-200 object-cover"
-            />
-          ) : (
-            <div className="flex h-32 w-32 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-400">
-              No photo
+        <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            {photoPath ? (
+              <img
+                src={photoPath}
+                alt="Profile preview"
+                className={`h-36 w-36 border border-slate-200 object-cover ${
+                  photoShape === "circle" ? "rounded-full" : "rounded-[1.75rem]"
+                }`}
+              />
+            ) : (
+              <div
+                className={`flex h-36 w-36 items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-400 ${
+                  photoShape === "circle" ? "rounded-full" : "rounded-[1.75rem]"
+                }`}
+              >
+                No photo
+              </div>
+            )}
+          </div>
+
+          <div className="w-full max-w-sm">
+            <label className="mb-2 block text-sm font-medium text-slate-900">
+              Photo Shape
+            </label>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => onPhotoShapeChange("square")}
+                className={`rounded-2xl border px-4 py-4 text-left transition ${
+                  photoShape === "square"
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-300 bg-white text-slate-700"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl border border-current/30 bg-current/10" />
+                  <div>
+                    <p className="text-sm font-medium">Square</p>
+                    <p
+                      className={`text-xs ${
+                        photoShape === "square" ? "text-slate-200" : "text-slate-500"
+                      }`}
+                    >
+                      Larger rounded square display
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onPhotoShapeChange("circle")}
+                className={`rounded-2xl border px-4 py-4 text-left transition ${
+                  photoShape === "circle"
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-300 bg-white text-slate-700"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full border border-current/30 bg-current/10" />
+                  <div>
+                    <p className="text-sm font-medium">Circle</p>
+                    <p
+                      className={`text-xs ${
+                        photoShape === "circle" ? "text-slate-200" : "text-slate-500"
+                      }`}
+                    >
+                      Circular profile display
+                    </p>
+                  </div>
+                </div>
+              </button>
             </div>
-          )}
+
+            <p className="mt-3 text-xs text-slate-500">
+              This setting changes how the photo is shown in the resume template.
+              The uploaded image file remains the same.
+            </p>
+          </div>
         </div>
 
         {photoPath ? (
