@@ -9,6 +9,7 @@ import {
   useForm,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import PhotoUploadField from "@/components/forms/photo-upload-field";
 import type { ResumeRecord } from "@/lib/types";
 import { getResumeFormData } from "@/lib/resume/selectors";
 import {
@@ -208,6 +209,8 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
     control,
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isDirty },
   } = form;
 
@@ -273,6 +276,8 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">Resume Settings</h2>
 
+        <input type="hidden" {...register("photoPath")} />
+
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-medium">Resume Title</label>
@@ -296,6 +301,18 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
               <option value="modern-2">Modern 2</option>
             </select>
           </div>
+        </div>
+
+        <div className="mt-6">
+          <PhotoUploadField
+            photoPath={watch("photoPath") ?? ""}
+            onChange={(nextPhotoPath) => {
+              setValue("photoPath", nextPhotoPath, {
+                shouldDirty: true,
+                shouldTouch: true,
+              });
+            }}
+          />
         </div>
       </section>
 

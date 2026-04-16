@@ -53,6 +53,7 @@ export default function ResumePreview({
             return (
               <ModernTemplateOne
                 data={resume.data}
+                photoPath={resume.photoPath}
                 editable={editable}
                 draggedSectionId={draggedSectionId}
                 dropTargetSectionId={dropTargetSectionId}
@@ -74,6 +75,7 @@ export default function ResumePreview({
             return (
               <ModernTemplateOne
                 data={resume.data}
+                photoPath={resume.photoPath}
                 editable={editable}
                 draggedSectionId={draggedSectionId}
                 dropTargetSectionId={dropTargetSectionId}
@@ -95,6 +97,7 @@ export default function ResumePreview({
             return (
               <ModernTemplateOne
                 data={resume.data}
+                photoPath={resume.photoPath}
                 editable={editable}
                 draggedSectionId={draggedSectionId}
                 dropTargetSectionId={dropTargetSectionId}

@@ -13,8 +13,8 @@ import type {
 } from "@/lib/types";
 import {
   getPersonalDetails,
-  getVisibleSections,
   getSummaryText,
+  getVisibleSections,
 } from "@/lib/resume/selectors";
 
 type DraggedItemState = {
@@ -24,6 +24,7 @@ type DraggedItemState = {
 
 type ModernTemplateOneProps = {
   data: ResumeData;
+  photoPath?: string | null;
   editable?: boolean;
   draggedSectionId?: string | null;
   dropTargetSectionId?: string | null;
@@ -192,6 +193,7 @@ function supportsItemDrag(section: ResumeSection) {
 
 export default function ModernTemplateOne({
   data,
+  photoPath = null,
   editable = false,
   draggedSectionId = null,
   dropTargetSectionId = null,
@@ -211,100 +213,119 @@ export default function ModernTemplateOne({
   const personal = getPersonalDetails(data);
   const summary = getSummaryText(data);
   const visibleSections = getVisibleSections(data);
+  const normalizedPhotoPath = photoPath?.trim() ?? "";
 
   const sidebarSections = visibleSections.filter(
     (section) => section.zone === "sidebar"
   );
   const mainSections = visibleSections.filter((section) => section.zone === "main");
 
-function renderItemShell(
-  section: ResumeSection,
-  item: ResumeSectionItem,
-  content: React.ReactNode,
-  options: { compact?: boolean } = {}
-) {
-  const itemDragEnabled = editable && supportsItemDrag(section);
-  const isDraggedItem =
-    draggedItem?.sectionId === section.id && draggedItem.itemId === item.id;
-  const isDropTargetItem =
-    dropTargetItem?.sectionId === section.id && dropTargetItem.itemId === item.id;
+  function renderProfilePhoto(variant: "sidebar" | "main") {
+    if (!hasText(normalizedPhotoPath)) {
+      return null;
+    }
 
-  const shellClasses = options.compact
-    ? "rounded-xl px-2 py-2 print:px-0 print:py-0"
-    : "rounded-xl px-3 py-3 print:px-0 print:py-0";
-
-  const hoverClasses = itemDragEnabled
-    ? section.zone === "sidebar"
-      ? "ring-1 ring-transparent transition hover:ring-white/20"
-      : "ring-1 ring-transparent transition hover:ring-slate-300"
-    : "";
-
-  const dropClasses = isDropTargetItem
-    ? section.zone === "sidebar"
-      ? "ring-2 ring-white/60"
-      : "ring-2 ring-slate-400"
-    : "";
-
-  return (
-    <div
-      key={item.id}
-      className={`${shellClasses} ${hoverClasses} ${dropClasses} ${
-        isDraggedItem ? "opacity-60" : ""
-      }`}
-      onDragEnter={
-        itemDragEnabled
-          ? (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onItemDragEnter?.(section.id, item.id);
-            }
-          : undefined
-      }
-      onDragOver={
-        itemDragEnabled
-          ? (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-            }
-          : undefined
-      }
-      onDrop={
-        itemDragEnabled
-          ? (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onItemDrop?.(section.id, item.id);
-            }
-          : undefined
-      }
-    >
-      {itemDragEnabled && (
-        <div
-          draggable
-          onDragStart={(event) => {
-            event.stopPropagation();
-            onItemDragStart?.(section.id, item.id);
-          }}
-          onDragEnd={(event) => {
-            event.stopPropagation();
-            onItemDragEnd?.();
-          }}
-          className={`mb-3 inline-flex cursor-grab rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.2em] active:cursor-grabbing print:hidden ${
-            section.zone === "sidebar"
-              ? "border-white/20 text-slate-300"
-              : "border-slate-300 text-slate-500"
-          }`}
-        >
-          Drag item
-        </div>
-      )}
-
-      <div className="print-avoid-break">
-        {content}
+    return (
+      <div className={variant === "sidebar" ? "mb-6" : "mb-6"}>
+        <img
+          src={normalizedPhotoPath}
+          alt={personal.fullName ? `${personal.fullName} profile photo` : "Profile photo"}
+          className={
+            variant === "sidebar"
+              ? "h-28 w-28 rounded-2xl border border-white/10 object-cover"
+              : "h-24 w-24 rounded-2xl border border-slate-200 object-cover"
+          }
+        />
       </div>
-    </div>
-  );
-}
+    );
+  }
+
+  function renderItemShell(
+    section: ResumeSection,
+    item: ResumeSectionItem,
+    content: React.ReactNode,
+    options: { compact?: boolean } = {}
+  ) {
+    const itemDragEnabled = editable && supportsItemDrag(section);
+    const isDraggedItem =
+      draggedItem?.sectionId === section.id && draggedItem.itemId === item.id;
+    const isDropTargetItem =
+      dropTargetItem?.sectionId === section.id && dropTargetItem.itemId === item.id;
+
+    const shellClasses = options.compact
+      ? "rounded-xl px-2 py-2 print:px-0 print:py-0"
+      : "rounded-xl px-3 py-3 print:px-0 print:py-0";
+
+    const hoverClasses = itemDragEnabled
+      ? section.zone === "sidebar"
+        ? "ring-1 ring-transparent transition hover:ring-white/20"
+        : "ring-1 ring-transparent transition hover:ring-slate-300"
+      : "";
+
+    const dropClasses = isDropTargetItem
+      ? section.zone === "sidebar"
+        ? "ring-2 ring-white/60"
+        : "ring-2 ring-slate-400"
+      : "";
+
+    return (
+      <div
+        key={item.id}
+        className={`${shellClasses} ${hoverClasses} ${dropClasses} ${
+          isDraggedItem ? "opacity-60" : ""
+        }`}
+        onDragEnter={
+          itemDragEnabled
+            ? (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onItemDragEnter?.(section.id, item.id);
+              }
+            : undefined
+        }
+        onDragOver={
+          itemDragEnabled
+            ? (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+            : undefined
+        }
+        onDrop={
+          itemDragEnabled
+            ? (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onItemDrop?.(section.id, item.id);
+              }
+            : undefined
+        }
+      >
+        {itemDragEnabled && (
+          <div
+            draggable
+            onDragStart={(event) => {
+              event.stopPropagation();
+              onItemDragStart?.(section.id, item.id);
+            }}
+            onDragEnd={(event) => {
+              event.stopPropagation();
+              onItemDragEnd?.();
+            }}
+            className={`mb-3 inline-flex cursor-grab rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.2em] active:cursor-grabbing print:hidden ${
+              section.zone === "sidebar"
+                ? "border-white/20 text-slate-300"
+                : "border-slate-300 text-slate-500"
+            }`}
+          >
+            Drag item
+          </div>
+        )}
+
+        <div className="print-avoid-break">{content}</div>
+      </div>
+    );
+  }
 
   function renderItemList(
     section: ResumeSection,
@@ -457,6 +478,8 @@ function renderItemShell(
         return (
           <>
             <div>
+              {renderProfilePhoto("sidebar")}
+
               <h1 className="break-words text-3xl font-bold leading-tight">
                 {personal.fullName || "Your Name"}
               </h1>
@@ -889,6 +912,8 @@ function renderItemShell(
       case "personal-details":
         return (
           <div>
+            {renderProfilePhoto("main")}
+
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
               Contact
             </h2>
