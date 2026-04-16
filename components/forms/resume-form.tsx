@@ -886,6 +886,26 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
             (isDirty ? "You have unsaved changes." : "No unsaved changes.")}
         </span>
       </div>
+
+      {isDirty ? (
+        <button
+          type="submit"
+          disabled={isSaving}
+          aria-label="Save"
+          title="Save"
+          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-white shadow-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60 print:hidden"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-5 w-5"
+          >
+            <path d="M3 4a2 2 0 0 1 2-2h7.586a2 2 0 0 1 1.414.586l2.414 2.414A2 2 0 0 1 17 6.414V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4Zm2 0v12h10V7h-3a1 1 0 0 1-1-1V4H5Zm8 0.414V6h1.586L13 4.414ZM7 10a1 1 0 0 1 1-1h4a1 1 0 1 1 0 2H8a1 1 0 0 1-1-1Z" />
+          </svg>
+          <span>{isSaving ? "Saving..." : "Save"}</span>
+        </button>
+      ) : null}
     </form>
   );
 }
