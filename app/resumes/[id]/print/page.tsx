@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import type { ResumeRecord } from "@/lib/types";
 import ResumePreview from "@/components/preview/resume-preview";
-import { normalizeResumeData } from "@/lib/resume/normalizers";
+import { normalizeResumeRecord } from "@/lib/resume/record";
 
 type PrintResumePageProps = {
   params: Promise<{ id: string }>;
@@ -21,14 +20,7 @@ export default async function PrintResumePage({
     notFound();
   }
 
-  const normalizedResume: ResumeRecord = {
-    ...resume,
-    data: normalizeResumeData(resume.data, {
-      template: resume.template,
-      themeColor: resume.themeColor,
-      fontFamily: resume.fontFamily,
-    }),
-  };
+  const normalizedResume = normalizeResumeRecord(resume);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">

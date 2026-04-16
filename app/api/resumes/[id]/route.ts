@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  buildResumeDataFromFormData,
-  normalizeResumeData,
-} from "@/lib/resume/normalizers";
+import type { ResumePhotoShape } from "@/lib/types";
+import { buildResumeDataFromFormData } from "@/lib/resume/normalizers";
+import { normalizeResumeRecord } from "@/lib/resume/record";
 import { resumeFormSchema } from "@/lib/validators";
 
 type RouteContext = {
@@ -18,14 +17,22 @@ function readNullableString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
+function readPhotoShape(value: unknown): ResumePhotoShape | undefined {
+  if (value === "circle" || value === "square") {
+    return value;
+  }
+
+  return undefined;
+}
+
 function hasCanonicalSectionsPayload(value: unknown): value is {
   title?: string;
   template?: string;
   themeColor?: string | null;
   fontFamily?: string | null;
   photoPath?: string | null;
-  photoShape?: string | null;
-  data: { sections: unknown[] };
+  photoShape?: ResumePhotoShape | null;
+  data: { sections: unknown[]; layout?: { photoShape?: ResumePhotoShape } };
 } {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -42,6 +49,23 @@ function hasCanonicalSectionsPayload(value: unknown): value is {
   return Array.isArray(dataRecord.sections);
 }
 
+function readCanonicalPayloadPhotoShape(rawBody: Record<string, unknown>) {
+  const directPhotoShape = readPhotoShape(rawBody.photoShape);
+
+  if (directPhotoShape) {
+    return directPhotoShape;
+  }
+
+  const data = rawBody.data;
+
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return undefined;
+  }
+
+  const layout = (data as { layout?: { photoShape?: unknown } }).layout;
+  return readPhotoShape(layout?.photoShape);
+}
+
 export async function GET(_: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -54,14 +78,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
-    return NextResponse.json({
-      ...resume,
-      data: normalizeResumeData(resume.data, {
-        template: resume.template,
-        themeColor: resume.themeColor,
-        fontFamily: resume.fontFamily,
-      }),
-    });
+    return NextResponse.json(normalizeResumeRecord(resume));
   } catch (error) {
     console.error("Failed to fetch resume:", error);
     return NextResponse.json(
@@ -77,24 +94,36 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const rawBody = await req.json();
 
     if (hasCanonicalSectionsPayload(rawBody)) {
-      const title = readString(rawBody.title, "Untitled Resume");
-      const template = readString(rawBody.template, "modern-1");
-      const themeColor = readNullableString(rawBody.themeColor);
-      const fontFamily = readNullableString(rawBody.fontFamily);
-      const photoPath = readNullableString(rawBody.photoPath);
-      const photoShape =
-        rawBody.photoShape === "circle"
-          ? "circle"
-          : rawBody.photoShape === "square"
-            ? "square"
-            : undefined;
+      const rawRecord = rawBody as Record<string, unknown>;
+      const title = readString(rawRecord.title, "Untitled Resume");
+      const template = readString(rawRecord.template, "modern-1");
+      const themeColor = readNullableString(rawRecord.themeColor);
+      const fontFamily = readNullableString(rawRecord.fontFamily);
+      const photoPath = readNullableString(rawRecord.photoPath);
+      const photoShape = readCanonicalPayloadPhotoShape(rawRecord);
 
-      const data = normalizeResumeData(rawBody.data, {
+      const data = normalizeResumeRecord({
+        id,
+        title,
         template,
         themeColor,
         fontFamily,
-        photoShape,
-      });
+        photoPath,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        data: rawRecord.data,
+      }).data;
+
+      const normalizedData =
+        photoShape === undefined
+          ? data
+          : {
+              ...data,
+              layout: {
+                ...data.layout,
+                photoShape,
+              },
+            };
 
       const updatedResume = await prisma.resume.update({
         where: { id },
@@ -103,28 +132,22 @@ export async function PUT(req: NextRequest, context: RouteContext) {
           template,
           themeColor,
           fontFamily,
-          data,
+          data: normalizedData,
           photoPath,
         },
       });
 
-      return NextResponse.json({
-        ...updatedResume,
-        data: normalizeResumeData(updatedResume.data, {
-          template: updatedResume.template,
-          themeColor: updatedResume.themeColor,
-          fontFamily: updatedResume.fontFamily,
-        }),
-      });
+      return NextResponse.json(normalizeResumeRecord(updatedResume));
     }
 
     const body = resumeFormSchema.parse(rawBody);
+    const photoShape = body.photoShape === "circle" ? "circle" : "square";
 
     const data = buildResumeDataFromFormData(body.data, {
       template: body.template,
       themeColor: body.themeColor ?? null,
       fontFamily: body.fontFamily ?? null,
-      photoShape: body.photoShape === "circle" ? "circle" : "square",
+      photoShape,
     });
 
     const updatedResume = await prisma.resume.update({
@@ -139,14 +162,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       },
     });
 
-    return NextResponse.json({
-      ...updatedResume,
-      data: normalizeResumeData(updatedResume.data, {
-        template: updatedResume.template,
-        themeColor: updatedResume.themeColor,
-        fontFamily: updatedResume.fontFamily,
-      }),
-    });
+    return NextResponse.json(normalizeResumeRecord(updatedResume));
   } catch (error) {
     console.error("Failed to update resume:", error);
     return NextResponse.json(

@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ResumeForm from "@/components/forms/resume-form";
 import DuplicateResumeButton from "@/components/actions/duplicate-resume-button";
-import type { ResumeRecord } from "@/lib/types";
-import { normalizeResumeData } from "@/lib/resume/normalizers";
+import { normalizeResumeRecord } from "@/lib/resume/record";
 
 type EditResumePageProps = {
   params: Promise<{ id: string }>;
@@ -23,14 +22,7 @@ export default async function EditResumePage({
     notFound();
   }
 
-  const normalizedResume: ResumeRecord = {
-    ...resume,
-    data: normalizeResumeData(resume.data, {
-      template: resume.template,
-      themeColor: resume.themeColor,
-      fontFamily: resume.fontFamily,
-    }),
-  };
+  const normalizedResume = normalizeResumeRecord(resume);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">

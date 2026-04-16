@@ -9,6 +9,10 @@ import type {
   ResumeSectionItem,
   ResumeZone,
 } from "@/lib/types";
+import {
+  buildResumeUpdatePayload,
+  normalizeResumeRecord,
+} from "@/lib/resume/record";
 
 type PreviewEditorProps = {
   resume: ResumeRecord;
@@ -164,7 +168,9 @@ function moveItemToEnd(items: ResumeSectionItem[], draggedItemId: string) {
 
 export default function PreviewEditor({ resume }: PreviewEditorProps) {
   const router = useRouter();
-  const [draftResume, setDraftResume] = useState<ResumeRecord>(resume);
+  const [draftResume, setDraftResume] = useState<ResumeRecord>(
+    normalizeResumeRecord(resume)
+  );
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
   const [dropTargetSectionId, setDropTargetSectionId] = useState<string | null>(
     null
@@ -179,13 +185,15 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
   async function saveSections(nextSections: ResumeSection[]) {
     const previousResume = draftResume;
 
-    const optimisticResume: ResumeRecord = {
-      ...draftResume,
-      data: {
-        ...draftResume.data,
-        sections: nextSections,
-      },
+    const nextData = {
+      ...draftResume.data,
+      sections: nextSections,
     };
+
+    const optimisticResume = normalizeResumeRecord({
+      ...draftResume,
+      data: nextData,
+    });
 
     setDraftResume(optimisticResume);
     setIsSaving(true);
@@ -197,24 +205,17 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          title: draftResume.title,
-          template: draftResume.template,
-          themeColor: draftResume.themeColor ?? "",
-          fontFamily: draftResume.fontFamily ?? "",
-          photoPath: draftResume.photoPath ?? "",
-          data: {
-            ...draftResume.data,
-            sections: nextSections,
-          },
-        }),
+        body: JSON.stringify(buildResumeUpdatePayload(draftResume, nextData)),
       });
 
       if (!response.ok) {
         throw new Error("Failed to save layout");
       }
 
-      const savedResume = (await response.json()) as ResumeRecord;
+      const savedResume = normalizeResumeRecord(
+        (await response.json()) as ResumeRecord
+      );
+
       setDraftResume(savedResume);
       setMessage("Layout saved.");
       router.refresh();
@@ -302,6 +303,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
     }
 
     const nextItems = moveItemToEnd(section.items, draggedItem.itemId);
+
     const nextSections = updateSectionItems(
       draftResume.data.sections,
       sectionId,

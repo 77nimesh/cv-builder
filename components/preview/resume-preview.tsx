@@ -45,76 +45,38 @@ export default function ResumePreview({
   onItemListDrop,
   onItemDragEnd,
 }: ResumePreviewProps) {
+  const activeTemplate = resume.data.layout.template || resume.template;
+
+  const templateProps = {
+    data: resume.data,
+    photoPath: resume.photoPath,
+    editable,
+    draggedSectionId,
+    dropTargetSectionId,
+    draggedItem,
+    dropTargetItem,
+    onSectionDragStart,
+    onSectionDragEnter,
+    onSectionDrop,
+    onZoneDrop,
+    onSectionDragEnd,
+    onItemDragStart,
+    onItemDragEnter,
+    onItemDrop,
+    onItemListDrop,
+    onItemDragEnd,
+  };
+
   return (
     <div className="print:m-0 print:p-0">
       {(() => {
-        switch (resume.template) {
+        switch (activeTemplate) {
           case "modern-1":
-            return (
-              <ModernTemplateOne
-                data={resume.data}
-                photoPath={resume.photoPath}
-                editable={editable}
-                draggedSectionId={draggedSectionId}
-                dropTargetSectionId={dropTargetSectionId}
-                draggedItem={draggedItem}
-                dropTargetItem={dropTargetItem}
-                onSectionDragStart={onSectionDragStart}
-                onSectionDragEnter={onSectionDragEnter}
-                onSectionDrop={onSectionDrop}
-                onZoneDrop={onZoneDrop}
-                onSectionDragEnd={onSectionDragEnd}
-                onItemDragStart={onItemDragStart}
-                onItemDragEnter={onItemDragEnter}
-                onItemDrop={onItemDrop}
-                onItemListDrop={onItemListDrop}
-                onItemDragEnd={onItemDragEnd}
-              />
-            );
+            return <ModernTemplateOne {...templateProps} />;
           case "modern-2":
-            return (
-              <ModernTemplateOne
-                data={resume.data}
-                photoPath={resume.photoPath}
-                editable={editable}
-                draggedSectionId={draggedSectionId}
-                dropTargetSectionId={dropTargetSectionId}
-                draggedItem={draggedItem}
-                dropTargetItem={dropTargetItem}
-                onSectionDragStart={onSectionDragStart}
-                onSectionDragEnter={onSectionDragEnter}
-                onSectionDrop={onSectionDrop}
-                onZoneDrop={onZoneDrop}
-                onSectionDragEnd={onSectionDragEnd}
-                onItemDragStart={onItemDragStart}
-                onItemDragEnter={onItemDragEnter}
-                onItemDrop={onItemDrop}
-                onItemListDrop={onItemListDrop}
-                onItemDragEnd={onItemDragEnd}
-              />
-            );
+            return <ModernTemplateOne {...templateProps} />;
           default:
-            return (
-              <ModernTemplateOne
-                data={resume.data}
-                photoPath={resume.photoPath}
-                editable={editable}
-                draggedSectionId={draggedSectionId}
-                dropTargetSectionId={dropTargetSectionId}
-                draggedItem={draggedItem}
-                dropTargetItem={dropTargetItem}
-                onSectionDragStart={onSectionDragStart}
-                onSectionDragEnter={onSectionDragEnter}
-                onSectionDrop={onSectionDrop}
-                onZoneDrop={onZoneDrop}
-                onSectionDragEnd={onSectionDragEnd}
-                onItemDragStart={onItemDragStart}
-                onItemDragEnter={onItemDragEnter}
-                onItemDrop={onItemDrop}
-                onItemListDrop={onItemListDrop}
-                onItemDragEnd={onItemDragEnd}
-              />
-            );
+            return <ModernTemplateOne {...templateProps} />;
         }
       })()}
     </div>
