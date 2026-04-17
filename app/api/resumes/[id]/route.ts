@@ -2,12 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { ResumePhotoShape } from "@/lib/types";
 import { buildResumeDataFromFormData } from "@/lib/resume/normalizers";
-import { normalizeResumeRecord } from "@/lib/resume/record";
+import {
+  buildResumeUpdatePayload,
+  normalizeResumeRecord,
+} from "@/lib/resume/record";
 import { resumeFormSchema } from "@/lib/validators";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOwn(record: Record<string, unknown>, key: string) {
+  return Object.prototype.hasOwnProperty.call(record, key);
+}
 
 function readString(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim().length > 0 ? value : fallback;
@@ -26,27 +37,14 @@ function readPhotoShape(value: unknown): ResumePhotoShape | undefined {
 }
 
 function hasCanonicalSectionsPayload(value: unknown): value is {
-  title?: string;
-  template?: string;
-  themeColor?: string | null;
-  fontFamily?: string | null;
-  photoPath?: string | null;
-  photoShape?: ResumePhotoShape | null;
   data: { sections: unknown[]; layout?: { photoShape?: ResumePhotoShape } };
 } {
-  if (typeof value !== "object" || value === null) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const record = value as Record<string, unknown>;
-  const data = record.data;
-
-  if (typeof data !== "object" || data === null) {
-    return false;
-  }
-
-  const dataRecord = data as Record<string, unknown>;
-  return Array.isArray(dataRecord.sections);
+  const data = value.data;
+  return isRecord(data) && Array.isArray(data.sections);
 }
 
 function readCanonicalPayloadPhotoShape(rawBody: Record<string, unknown>) {
@@ -58,7 +56,7 @@ function readCanonicalPayloadPhotoShape(rawBody: Record<string, unknown>) {
 
   const data = rawBody.data;
 
-  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+  if (!isRecord(data)) {
     return undefined;
   }
 
@@ -91,74 +89,84 @@ export async function GET(_: NextRequest, context: RouteContext) {
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
+
+    const existingResumeRaw = await prisma.resume.findUnique({
+      where: { id },
+    });
+
+    if (!existingResumeRaw) {
+      return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+    }
+
+    const existingResume = normalizeResumeRecord(existingResumeRaw);
     const rawBody = await req.json();
+
+    let payload: ReturnType<typeof buildResumeUpdatePayload>;
 
     if (hasCanonicalSectionsPayload(rawBody)) {
       const rawRecord = rawBody as Record<string, unknown>;
-      const title = readString(rawRecord.title, "Untitled Resume");
-      const template = readString(rawRecord.template, "modern-1");
-      const themeColor = readNullableString(rawRecord.themeColor);
-      const fontFamily = readNullableString(rawRecord.fontFamily);
-      const photoPath = readNullableString(rawRecord.photoPath);
-      const photoShape = readCanonicalPayloadPhotoShape(rawRecord);
 
-      const data = normalizeResumeRecord({
-        id,
-        title,
-        template,
+      payload = buildResumeUpdatePayload(existingResume, rawRecord.data, {
+        title: hasOwn(rawRecord, "title")
+          ? readString(rawRecord.title, existingResume.title)
+          : undefined,
+        template: hasOwn(rawRecord, "template")
+          ? readString(rawRecord.template, existingResume.template)
+          : undefined,
+        themeColor: hasOwn(rawRecord, "themeColor")
+          ? readNullableString(rawRecord.themeColor)
+          : undefined,
+        fontFamily: hasOwn(rawRecord, "fontFamily")
+          ? readNullableString(rawRecord.fontFamily)
+          : undefined,
+        photoPath: hasOwn(rawRecord, "photoPath")
+          ? readNullableString(rawRecord.photoPath)
+          : undefined,
+        photoShape: readCanonicalPayloadPhotoShape(rawRecord),
+      });
+    } else {
+      const body = resumeFormSchema.parse(rawBody);
+      const themeColor =
+        body.themeColor === undefined
+          ? existingResume.themeColor
+          : body.themeColor ?? null;
+      const fontFamily =
+        body.fontFamily === undefined
+          ? existingResume.fontFamily
+          : body.fontFamily ?? null;
+      const photoPath =
+        body.photoPath === undefined
+          ? existingResume.photoPath
+          : body.photoPath ?? null;
+      const photoShape =
+        body.photoShape ?? existingResume.data.layout.photoShape ?? "square";
+
+      const nextData = buildResumeDataFromFormData(body.data, {
+        template: body.template,
+        themeColor,
+        fontFamily,
+        photoShape,
+      });
+
+      payload = buildResumeUpdatePayload(existingResume, nextData, {
+        title: body.title,
+        template: body.template,
         themeColor,
         fontFamily,
         photoPath,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        data: rawRecord.data,
-      }).data;
-
-      const normalizedData =
-        photoShape === undefined
-          ? data
-          : {
-              ...data,
-              layout: {
-                ...data.layout,
-                photoShape,
-              },
-            };
-
-      const updatedResume = await prisma.resume.update({
-        where: { id },
-        data: {
-          title,
-          template,
-          themeColor,
-          fontFamily,
-          data: normalizedData,
-          photoPath,
-        },
+        photoShape,
       });
-
-      return NextResponse.json(normalizeResumeRecord(updatedResume));
     }
-
-    const body = resumeFormSchema.parse(rawBody);
-    const photoShape = body.photoShape === "circle" ? "circle" : "square";
-
-    const data = buildResumeDataFromFormData(body.data, {
-      template: body.template,
-      themeColor: body.themeColor ?? null,
-      fontFamily: body.fontFamily ?? null,
-      photoShape,
-    });
 
     const updatedResume = await prisma.resume.update({
       where: { id },
       data: {
-        title: body.title,
-        template: body.template,
-        themeColor: body.themeColor || null,
-        fontFamily: body.fontFamily || null,
-        data,
-        photoPath: body.photoPath || null,
+        title: payload.title,
+        template: payload.template,
+        themeColor: payload.themeColor,
+        fontFamily: payload.fontFamily,
+        photoPath: payload.photoPath,
+        data: payload.data,
       },
     });
 

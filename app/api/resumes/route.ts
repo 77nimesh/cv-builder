@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createDefaultResumeData } from "@/lib/default-resume";
-import { normalizeResumeData } from "@/lib/resume/normalizers";
+import { normalizeResumeRecord } from "@/lib/resume/record";
 
 export async function GET() {
   try {
@@ -9,16 +9,7 @@ export async function GET() {
       orderBy: { updatedAt: "desc" },
     });
 
-    return NextResponse.json(
-      resumes.map((resume) => ({
-        ...resume,
-        data: normalizeResumeData(resume.data, {
-          template: resume.template,
-          themeColor: resume.themeColor,
-          fontFamily: resume.fontFamily,
-        }),
-      }))
-    );
+    return NextResponse.json(resumes.map((resume) => normalizeResumeRecord(resume)));
   } catch (error) {
     console.error("Failed to fetch resumes:", error);
     return NextResponse.json(
@@ -38,11 +29,12 @@ export async function POST() {
         template: data.layout.template,
         themeColor: data.layout.themeColor,
         fontFamily: data.layout.fontFamily,
+        photoPath: null,
         data,
       },
     });
 
-    return NextResponse.json(resume, { status: 201 });
+    return NextResponse.json(normalizeResumeRecord(resume), { status: 201 });
   } catch (error) {
     console.error("Failed to create resume:", error);
     return NextResponse.json(

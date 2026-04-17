@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { normalizeResumeData } from "@/lib/resume/normalizers";
+import { normalizeResumeRecord } from "@/lib/resume/record";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -26,22 +26,18 @@ export async function POST(_: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
 
-    const sourceResume = await prisma.resume.findUnique({
+    const sourceResumeRaw = await prisma.resume.findUnique({
       where: { id },
     });
 
-    if (!sourceResume) {
+    if (!sourceResumeRaw) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
+    const sourceResume = normalizeResumeRecord(sourceResumeRaw);
+
     const existingResumes = await prisma.resume.findMany({
       select: { title: true },
-    });
-
-    const normalizedData = normalizeResumeData(sourceResume.data, {
-      template: sourceResume.template,
-      themeColor: sourceResume.themeColor,
-      fontFamily: sourceResume.fontFamily,
     });
 
     const duplicatedResume = await prisma.resume.create({
@@ -50,25 +46,17 @@ export async function POST(_: Request, context: RouteContext) {
           sourceResume.title,
           existingResumes.map((resume) => resume.title)
         ),
-        template: sourceResume.template,
-        themeColor: sourceResume.themeColor,
-        fontFamily: sourceResume.fontFamily,
+        template: sourceResume.data.layout.template,
+        themeColor: sourceResume.data.layout.themeColor,
+        fontFamily: sourceResume.data.layout.fontFamily,
         photoPath: sourceResume.photoPath,
-        data: normalizedData,
+        data: sourceResume.data,
       },
     });
 
-    return NextResponse.json(
-      {
-        ...duplicatedResume,
-        data: normalizeResumeData(duplicatedResume.data, {
-          template: duplicatedResume.template,
-          themeColor: duplicatedResume.themeColor,
-          fontFamily: duplicatedResume.fontFamily,
-        }),
-      },
-      { status: 201 }
-    );
+    return NextResponse.json(normalizeResumeRecord(duplicatedResume), {
+      status: 201,
+    });
   } catch (error) {
     console.error("Failed to duplicate resume:", error);
     return NextResponse.json(

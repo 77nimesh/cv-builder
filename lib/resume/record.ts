@@ -1,9 +1,39 @@
-import type { ResumeData, ResumePhotoShape, ResumeRecord } from "@/lib/types";
+import type { ResumePhotoShape, ResumeRecord } from "@/lib/types";
 import { normalizeResumeData } from "@/lib/resume/normalizers";
 
 type ResumeRecordSource = Omit<ResumeRecord, "data"> & {
   data: unknown;
 };
+
+type ResumeUpdateOverrides = {
+  title?: string;
+  template?: string | null;
+  themeColor?: string | null;
+  fontFamily?: string | null;
+  photoPath?: string | null;
+  photoShape?: ResumePhotoShape | null;
+};
+
+function normalizeRequiredString(value: unknown, fallback: string): string {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
+function normalizeNullableString(
+  value: unknown,
+  fallback: string | null = null
+): string | null {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 function readPhotoShape(value: unknown): ResumePhotoShape | undefined {
   if (value === "circle" || value === "square") {
@@ -22,6 +52,25 @@ function getPhotoShapeFromData(data: unknown): ResumePhotoShape | undefined {
   return readPhotoShape(layout?.photoShape);
 }
 
+function getBaseTemplate(resume: ResumeRecord): string {
+  return normalizeRequiredString(
+    resume.data.layout.template || resume.template,
+    "modern-1"
+  );
+}
+
+function getBaseThemeColor(resume: ResumeRecord): string | null {
+  return resume.data.layout.themeColor ?? resume.themeColor ?? null;
+}
+
+function getBaseFontFamily(resume: ResumeRecord): string | null {
+  return resume.data.layout.fontFamily ?? resume.fontFamily ?? null;
+}
+
+function getBasePhotoShape(resume: ResumeRecord): ResumePhotoShape {
+  return getPhotoShapeFromData(resume.data) ?? "square";
+}
+
 export function normalizeResumeRecord(record: ResumeRecordSource): ResumeRecord {
   return {
     ...record,
@@ -36,15 +85,31 @@ export function normalizeResumeRecord(record: ResumeRecordSource): ResumeRecord 
 
 export function buildResumeUpdatePayload(
   resume: ResumeRecord,
-  nextData: ResumeData = resume.data
+  nextData: unknown = resume.data,
+  overrides: ResumeUpdateOverrides = {}
 ) {
-  const template = nextData.layout.template || resume.template || "modern-1";
+  const template = normalizeRequiredString(
+    overrides.template,
+    getBaseTemplate(resume)
+  );
   const themeColor =
-    nextData.layout.themeColor ?? resume.themeColor ?? null;
+    overrides.themeColor !== undefined
+      ? normalizeNullableString(overrides.themeColor)
+      : getBaseThemeColor(resume);
   const fontFamily =
-    nextData.layout.fontFamily ?? resume.fontFamily ?? null;
+    overrides.fontFamily !== undefined
+      ? normalizeNullableString(overrides.fontFamily)
+      : getBaseFontFamily(resume);
+  const photoPath =
+    overrides.photoPath !== undefined
+      ? normalizeNullableString(overrides.photoPath)
+      : resume.photoPath ?? null;
   const photoShape =
-    nextData.layout.photoShape === "circle" ? "circle" : "square";
+    readPhotoShape(overrides.photoShape) ?? getBasePhotoShape(resume);
+  const title = normalizeRequiredString(
+    overrides.title,
+    normalizeRequiredString(resume.title, "Untitled Resume")
+  );
 
   const normalizedData = normalizeResumeData(nextData, {
     template,
@@ -54,11 +119,11 @@ export function buildResumeUpdatePayload(
   });
 
   return {
-    title: resume.title,
+    title,
     template,
-    themeColor: themeColor ?? "",
-    fontFamily: fontFamily ?? "",
-    photoPath: resume.photoPath ?? "",
+    themeColor,
+    fontFamily,
+    photoPath,
     photoShape,
     data: normalizedData,
   };
