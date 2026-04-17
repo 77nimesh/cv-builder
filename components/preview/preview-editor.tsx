@@ -194,6 +194,18 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
       ...draftResume,
       data: nextData,
     });
+    const savePayload = buildResumeUpdatePayload(
+      optimisticResume,
+      optimisticResume.data,
+      {
+        title: optimisticResume.title,
+        template: optimisticResume.template,
+        themeColor: optimisticResume.themeColor,
+        fontFamily: optimisticResume.fontFamily,
+        photoPath: optimisticResume.photoPath,
+        photoShape: optimisticResume.data.layout.photoShape,
+      }
+    );
 
     setDraftResume(optimisticResume);
     setIsSaving(true);
@@ -205,7 +217,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(buildResumeUpdatePayload(draftResume, nextData)),
+        body: JSON.stringify(savePayload),
       });
 
       if (!response.ok) {

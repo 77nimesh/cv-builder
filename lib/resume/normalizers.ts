@@ -92,6 +92,19 @@ function buildSafeItemId(prefix: string, position: number) {
   return `${prefix}-${position + 1}`;
 }
 
+function buildSafeSectionId(position: number) {
+  return `custom-${position + 1}`;
+}
+
+function readIdString(value: unknown, fallback = ""): string {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
 function normalizePersonalDetailsContent(value: unknown): PersonalDetails {
   if (!isRecord(value)) {
     return { ...defaultPersonalDetails };
@@ -212,7 +225,7 @@ function buildNormalizedItem(
   fallbackPrefix: string
 ): ResumeSectionItem {
   const itemRecord = isRecord(rawItem) ? rawItem : null;
-  const rawId = readString(itemRecord?.id);
+  const rawId = readIdString(itemRecord?.id);
   const id = isBrokenGeneratedId(rawId)
     ? buildSafeItemId(fallbackPrefix, fallbackPosition)
     : rawId;
@@ -343,7 +356,7 @@ function normalizeCanonicalSection(
   const sectionRecord = isRecord(rawSection) ? rawSection : {};
 
   return {
-    id: readString(sectionRecord.id, defaultSection.id),
+    id: defaultSection.id,
     type: defaultSection.type,
     title: readString(sectionRecord.title, defaultSection.title),
     zone: readZone(sectionRecord.zone, defaultSection.zone),
@@ -362,7 +375,10 @@ function normalizeCustomSection(
   fallbackPosition: number
 ): ResumeSection {
   const sectionRecord = isRecord(rawSection) ? rawSection : {};
-  const id = readString(sectionRecord.id, `custom-${fallbackPosition + 1}`);
+  const rawId = readIdString(sectionRecord.id);
+  const id = isBrokenGeneratedId(rawId)
+    ? buildSafeSectionId(fallbackPosition)
+    : readIdString(sectionRecord.id, buildSafeSectionId(fallbackPosition));
 
   return {
     id,
@@ -373,6 +389,48 @@ function normalizeCustomSection(
     visible: readBoolean(sectionRecord.visible, true),
     items: normalizeSectionItems("custom", sectionRecord.items, `${id}-entry`),
   };
+}
+
+function buildUniqueSectionId(
+  section: ResumeSection,
+  fallbackPosition: number,
+  seenIds: Set<string>
+) {
+  const baseId =
+    section.type === "custom"
+      ? isBrokenGeneratedId(section.id)
+        ? buildSafeSectionId(fallbackPosition)
+        : readIdString(section.id, buildSafeSectionId(fallbackPosition))
+      : section.id;
+
+  let nextId = baseId;
+
+  if (!nextId || seenIds.has(nextId)) {
+    const safeBase =
+      section.type === "custom"
+        ? buildSafeSectionId(fallbackPosition)
+        : `${section.id}-${fallbackPosition + 1}`;
+
+    nextId = safeBase;
+
+    let suffix = 2;
+    while (seenIds.has(nextId)) {
+      nextId = `${safeBase}-${suffix}`;
+      suffix += 1;
+    }
+  }
+
+  seenIds.add(nextId);
+  return nextId;
+}
+
+function normalizeSectionIds(sections: ResumeSection[]) {
+  const seenIds = new Set<string>();
+
+  return sections.map((section, index) => ({
+    ...section,
+    id: buildUniqueSectionId(section, index, seenIds),
+  }));
 }
 
 function normalizeCanonicalResumeData(
@@ -431,12 +489,14 @@ function normalizeCanonicalResumeData(
         defaults.layout.photoShape
       ),
     },
-    sections: [...builtInSections, ...customSections]
-      .sort((left, right) => left.position - right.position)
-      .map((section, index) => ({
-        ...section,
-        position: index,
-      })),
+    sections: normalizeSectionIds(
+      [...builtInSections, ...customSections]
+        .sort((left, right) => left.position - right.position)
+        .map((section, index) => ({
+          ...section,
+          position: index,
+        }))
+    ),
   };
 }
 
