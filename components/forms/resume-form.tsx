@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { type ReactNode, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   type Control,
   type UseFormRegister,
+  type UseFormSetValue,
+  type UseFormWatch,
   useFieldArray,
   useForm,
 } from "react-hook-form";
@@ -39,47 +41,98 @@ type ResumeFormProps = {
   resume: ResumeRecord;
 };
 
-const BUILT_IN_SECTION_VISIBILITY_OPTIONS: Array<{
-  field: keyof ResumeFormValues["data"]["sectionVisibility"];
-  label: string;
-  description: string;
-}> = [
-  {
-    field: "personalDetails",
-    label: "Personal Details",
-    description: "Name, contact details, headline, and photo",
-  },
-  {
-    field: "summary",
-    label: "Professional Summary",
-    description: "Short introduction or profile summary",
-  },
-  {
-    field: "experience",
-    label: "Experience",
-    description: "Employment history and achievements",
-  },
-  {
-    field: "education",
-    label: "Education",
-    description: "Degrees, certificates, and study history",
-  },
-  {
-    field: "skills",
-    label: "Skills",
-    description: "Skill list or capability tags",
-  },
-  {
-    field: "projects",
-    label: "Projects",
-    description: "Portfolio, coursework, or personal projects",
-  },
-  {
-    field: "certifications",
-    label: "Certifications",
-    description: "Licences, badges, and formal certifications",
-  },
-];
+type BuiltInSectionVisibilityField = keyof ResumeFormValues["data"]["sectionVisibility"] & string;
+
+const SECTION_HIDDEN_NOTE = "Hidden in preview, print, and PDF. Content stays saved.";
+
+function getSectionCardClassName(visible: boolean) {
+  return `rounded-2xl border border-slate-200 p-6 shadow-sm ${
+    visible ? "bg-white" : "bg-slate-50/80"
+  }`;
+}
+
+type VisibilityToggleProps = {
+  checked: boolean;
+  onChange: (nextChecked: boolean) => void;
+};
+
+function VisibilityToggle({ checked, onChange }: VisibilityToggleProps) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+    >
+      <span
+        className={`relative h-5 w-9 rounded-full transition ${
+          checked ? "bg-slate-900" : "bg-slate-300"
+        }`}
+        aria-hidden
+      >
+        <span
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${
+            checked ? "left-4" : "left-0.5"
+          }`}
+        />
+      </span>
+      <span>{checked ? "Visible" : "Hidden"}</span>
+    </button>
+  );
+}
+
+function ThemePreviewSwatches({
+  primary,
+  softBackground,
+  softBorder,
+}: {
+  primary: string;
+  softBackground: string;
+  softBorder: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5" aria-hidden>
+      <span
+        className="h-4 w-4 rounded-full border border-black/10"
+        style={{ backgroundColor: primary }}
+      />
+      <span
+        className="h-4 w-4 rounded-full border"
+        style={{ backgroundColor: softBackground, borderColor: softBorder }}
+      />
+      <span
+        className="h-4 w-4 rounded-full border"
+        style={{ backgroundColor: '#ffffff', borderColor: softBorder }}
+      />
+    </span>
+  );
+}
+
+type SectionHeaderProps = {
+  title: string;
+  visible: boolean;
+  onToggle: (nextVisible: boolean) => void;
+  actions?: ReactNode;
+};
+
+function SectionHeader({ title, visible, onToggle, actions }: SectionHeaderProps) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <h2 className="text-xl font-semibold">{title}</h2>
+        {!visible ? (
+          <p className="mt-1 text-xs text-slate-500">{SECTION_HIDDEN_NOTE}</p>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-3">
+        {actions}
+        <VisibilityToggle checked={visible} onChange={onToggle} />
+      </div>
+    </div>
+  );
+}
 
 type ThemeColorDropdownProps = {
   value: string;
@@ -118,10 +171,10 @@ function ThemeColorDropdown({
         aria-expanded={isOpen}
       >
         <span className="flex min-w-0 items-center gap-3">
-          <span
-            className="h-4 w-4 shrink-0 rounded-full border border-black/10"
-            style={{ backgroundColor: activeTheme.primary }}
-            aria-hidden
+          <ThemePreviewSwatches
+            primary={activeTheme.primary}
+            softBackground={activeTheme.softBackgroundStrong}
+            softBorder={activeTheme.softBorder}
           />
           <span className="min-w-0">
             <span className="block truncate text-sm font-medium text-slate-900">
@@ -161,10 +214,10 @@ function ThemeColorDropdown({
                 role="option"
                 aria-selected={isActive}
               >
-                <span
-                  className="h-4 w-4 shrink-0 rounded-full border border-black/10"
-                  style={{ backgroundColor: themeOption.primary }}
-                  aria-hidden
+                <ThemePreviewSwatches
+                  primary={themeOption.primary}
+                  softBackground={themeOption.softBackgroundStrong}
+                  softBorder={themeOption.softBorder}
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-slate-900">
@@ -183,11 +236,116 @@ function ThemeColorDropdown({
   );
 }
 
+type FontFamilyDropdownProps = {
+  value: string;
+  onChange: (nextFontId: string) => void;
+};
+
+function FontFamilyDropdown({
+  value,
+  onChange,
+}: FontFamilyDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeFont = resolveResumeFont(value || DEFAULT_RESUME_FONT_ID);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex w-full items-center justify-between rounded-xl border border-slate-300 px-4 py-3 text-left outline-none"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className="min-w-0">
+          <span
+            className="block truncate text-sm font-medium text-slate-900"
+            style={{ fontFamily: activeFont.cssStack }}
+          >
+            {activeFont.label}
+          </span>
+          <span
+            className="block truncate text-xs text-slate-500"
+            style={{ fontFamily: activeFont.cssStack }}
+          >
+            {activeFont.sampleText}
+          </span>
+        </span>
+
+        <span className="ml-3 text-xs text-slate-500">{isOpen ? "▲" : "▼"}</span>
+      </button>
+
+      {isOpen ? (
+        <div
+          className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white shadow-xl"
+          role="listbox"
+          aria-label="Font Family"
+        >
+          <div
+            className="max-h-56 overflow-y-scroll overscroll-contain rounded-2xl p-2"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            {RESUME_FONT_PRESETS.map((fontOption) => {
+              const isActive = fontOption.id === activeFont.id;
+
+              return (
+                <button
+                  key={fontOption.id}
+                  type="button"
+                  onClick={() => {
+                    onChange(fontOption.id);
+                    setIsOpen(false);
+                  }}
+                  className={`flex w-full flex-col items-start rounded-xl px-3 py-3 text-left transition ${
+                    isActive
+                      ? "bg-slate-100 ring-1 ring-slate-300"
+                      : "hover:bg-slate-50"
+                  }`}
+                  role="option"
+                  aria-selected={isActive}
+                  style={{ fontFamily: fontOption.cssStack }}
+                >
+                  <span className="text-sm font-medium text-slate-900">
+                    {fontOption.label}
+                  </span>
+                  <span className="mt-1 text-xs text-slate-500">
+                    {fontOption.sampleText}
+                  </span>
+                  <span className="mt-1 text-[11px] text-slate-400">
+                    {fontOption.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 type CustomSectionFieldsProps = {
   index: number;
   control: Control<ResumeFormValues>;
   register: UseFormRegister<ResumeFormValues>;
   removeSection: (index: number) => void;
+  watch: UseFormWatch<ResumeFormValues>;
+  setValue: UseFormSetValue<ResumeFormValues>;
 };
 
 function CustomSectionFields({
@@ -195,28 +353,51 @@ function CustomSectionFields({
   control,
   register,
   removeSection,
+  watch,
+  setValue,
 }: CustomSectionFieldsProps) {
   const entriesArray = useFieldArray({
     control,
     name: `data.customSections.${index}.entries` as const,
   });
+  const isVisible = watch(`data.customSections.${index}.visible` as const);
 
   return (
-    <div className="rounded-2xl border border-slate-200 p-5">
+    <div className={`rounded-2xl border border-slate-200 p-5 ${
+      isVisible ? "bg-white" : "bg-slate-50/80"
+    }`}>
       <input
         type="hidden"
         {...register(`data.customSections.${index}.id` as const)}
       />
 
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="font-medium">Custom Section #{index + 1}</h3>
-        <button
-          type="button"
-          onClick={() => removeSection(index)}
-          className="text-sm text-red-600"
-        >
-          Remove Section
-        </button>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="font-medium">Custom Section #{index + 1}</h3>
+          {!isVisible ? (
+            <p className="mt-1 text-xs text-slate-500">{SECTION_HIDDEN_NOTE}</p>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => removeSection(index)}
+            className="text-sm text-red-600"
+          >
+            Remove Section
+          </button>
+
+          <VisibilityToggle
+            checked={Boolean(isVisible)}
+            onChange={(nextVisible) =>
+              setValue(`data.customSections.${index}.visible` as const, nextVisible, {
+                shouldDirty: true,
+                shouldTouch: true,
+              })
+            }
+          />
+        </div>
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -240,14 +421,6 @@ function CustomSectionFields({
           </select>
         </div>
 
-        <div className="md:col-span-2 flex items-center gap-2">
-          <input
-            type="checkbox"
-            {...register(`data.customSections.${index}.visible` as const)}
-            className="h-4 w-4"
-          />
-          <label className="text-sm font-medium">Visible in preview and PDF</label>
-        </div>
       </div>
 
       <div className="mt-6 flex items-center justify-between gap-4">
@@ -408,6 +581,17 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
   // ── Auto-save: debounce 1.5s after any field change ──────────────────────
   const isFirstRender = useRef(true);
   const watchedValues = watch();
+  const sectionVisibility = watch("data.sectionVisibility");
+
+  function updateSectionVisibility(
+    field: BuiltInSectionVisibilityField,
+    nextVisible: boolean
+  ) {
+    setValue(`data.sectionVisibility.${field}` as const, nextVisible, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  }
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -502,30 +686,16 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
 
           <div>
             <label className="mb-2 block text-sm font-medium">Font Family</label>
-            <select
-              {...register("fontFamily")}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            >
-              {RESUME_FONT_PRESETS.map((fontOption) => (
-                <option key={fontOption.id} value={fontOption.id}>
-                  {fontOption.label}
-                </option>
-              ))}
-            </select>
-            <p
-              className="mt-2 text-xs text-slate-500"
-              style={{
-                fontFamily: resolveResumeFont(
-                  watch("fontFamily") || DEFAULT_RESUME_FONT_ID
-                ).cssStack,
+            <input type="hidden" {...register("fontFamily")} />
+            <FontFamilyDropdown
+              value={watch("fontFamily") || DEFAULT_RESUME_FONT_ID}
+              onChange={(nextFontId) => {
+                setValue("fontFamily", nextFontId, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
               }}
-            >
-              {
-                resolveResumeFont(
-                  watch("fontFamily") || DEFAULT_RESUME_FONT_ID
-                ).description
-              }
-            </p>
+            />
           </div>
         </div>
 
@@ -549,45 +719,14 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Section Visibility</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Hidden sections stay saved in your resume data but do not render in preview, print, or PDF.
-        </p>
-
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
-          {BUILT_IN_SECTION_VISIBILITY_OPTIONS.map((sectionOption) => (
-            <label
-              key={sectionOption.field}
-              className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4"
-            >
-              <input
-                type="checkbox"
-                {...register(
-                  `data.sectionVisibility.${sectionOption.field}` as const
-                )}
-                className="mt-1 h-4 w-4"
-              />
-
-              <span>
-                <span className="block text-sm font-medium text-slate-900">
-                  {sectionOption.label}
-                </span>
-                <span className="mt-1 block text-xs text-slate-500">
-                  {sectionOption.description}
-                </span>
-              </span>
-            </label>
-          ))}
-        </div>
-
-        <p className="mt-4 text-xs text-slate-500">
-          Custom sections keep their own visibility toggle inside each custom section card below.
-        </p>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Personal Details</h2>
+      <section className={getSectionCardClassName(sectionVisibility.personalDetails)}>
+        <SectionHeader
+          title="Personal Details"
+          visible={sectionVisibility.personalDetails}
+          onToggle={(nextVisible) =>
+            updateSectionVisibility("personalDetails", nextVisible)
+          }
+        />
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div>
@@ -655,8 +794,12 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Professional Summary</h2>
+      <section className={getSectionCardClassName(sectionVisibility.summary)}>
+        <SectionHeader
+          title="Professional Summary"
+          visible={sectionVisibility.summary}
+          onToggle={(nextVisible) => updateSectionVisibility("summary", nextVisible)}
+        />
 
         <div className="mt-6">
           <label className="mb-2 block text-sm font-medium">Summary</label>
@@ -669,17 +812,21 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold">Experience</h2>
-          <button
+      <section className={getSectionCardClassName(sectionVisibility.experience)}>
+        <SectionHeader
+          title="Experience"
+          visible={sectionVisibility.experience}
+          onToggle={(nextVisible) => updateSectionVisibility("experience", nextVisible)}
+          actions={
+            <button
             type="button"
             onClick={() => experienceArray.append({ ...defaultExperienceItem })}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Experience
           </button>
-        </div>
+          }
+        />
 
         {experienceArray.fields.length === 0 ? (
           <p className="mt-6 text-sm text-slate-500">No experience entries yet.</p>
@@ -765,17 +912,21 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold">Education</h2>
-          <button
+      <section className={getSectionCardClassName(sectionVisibility.education)}>
+        <SectionHeader
+          title="Education"
+          visible={sectionVisibility.education}
+          onToggle={(nextVisible) => updateSectionVisibility("education", nextVisible)}
+          actions={
+            <button
             type="button"
             onClick={() => educationArray.append({ ...defaultEducationItem })}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Education
           </button>
-        </div>
+          }
+        />
 
         {educationArray.fields.length === 0 ? (
           <p className="mt-6 text-sm text-slate-500">No education entries yet.</p>
@@ -861,17 +1012,21 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold">Skills</h2>
-          <button
+      <section className={getSectionCardClassName(sectionVisibility.skills)}>
+        <SectionHeader
+          title="Skills"
+          visible={sectionVisibility.skills}
+          onToggle={(nextVisible) => updateSectionVisibility("skills", nextVisible)}
+          actions={
+            <button
             type="button"
             onClick={() => skillsArray.append({ ...defaultSkillItem })}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Skill
           </button>
-        </div>
+          }
+        />
 
         {skillsArray.fields.length === 0 ? (
           <p className="mt-6 text-sm text-slate-500">No skills added yet.</p>
@@ -918,17 +1073,21 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold">Projects</h2>
-          <button
+      <section className={getSectionCardClassName(sectionVisibility.projects)}>
+        <SectionHeader
+          title="Projects"
+          visible={sectionVisibility.projects}
+          onToggle={(nextVisible) => updateSectionVisibility("projects", nextVisible)}
+          actions={
+            <button
             type="button"
             onClick={() => projectsArray.append({ ...defaultProjectItem })}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Add Project
           </button>
-        </div>
+          }
+        />
 
         {projectsArray.fields.length === 0 ? (
           <p className="mt-6 text-sm text-slate-500">No projects added yet.</p>
@@ -1012,10 +1171,13 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold">Certifications</h2>
-          <button
+      <section className={getSectionCardClassName(sectionVisibility.certifications)}>
+        <SectionHeader
+          title="Certifications"
+          visible={sectionVisibility.certifications}
+          onToggle={(nextVisible) => updateSectionVisibility("certifications", nextVisible)}
+          actions={
+            <button
             type="button"
             onClick={() =>
               certificationsArray.append({ ...defaultCertificationItem })
@@ -1024,7 +1186,8 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
           >
             Add Certification
           </button>
-        </div>
+          }
+        />
 
         {certificationsArray.fields.length === 0 ? (
           <p className="mt-6 text-sm text-slate-500">
@@ -1127,6 +1290,8 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
                 control={control}
                 register={register}
                 removeSection={customSectionsArray.remove}
+                watch={watch}
+                setValue={setValue}
               />
             ))}
           </div>
