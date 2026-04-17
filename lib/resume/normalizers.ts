@@ -444,8 +444,8 @@ function normalizeCanonicalResumeData(
     photoShape: options.photoShape ?? undefined,
   });
 
-  const meta = isRecord(value.meta) ? value.meta : {};
-  const layout = isRecord(value.layout) ? value.layout : {};
+  const meta: Record<string, unknown> = isRecord(value.meta) ? value.meta : {};
+  const layout: Record<string, unknown> = isRecord(value.layout) ? value.layout : {};
   const sections = Array.isArray(value.sections) ? value.sections : [];
 
   const builtInSections = defaults.sections.map((defaultSection, index) => {

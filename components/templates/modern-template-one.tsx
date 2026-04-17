@@ -1,5 +1,6 @@
 "use client";
 
+import type { DragEvent, ReactNode } from "react";
 import type {
   CertificationItem,
   CustomSectionEntry,
@@ -246,7 +247,7 @@ export default function ModernTemplateOne({
 function renderItemShell(
   section: ResumeSection,
   item: ResumeSectionItem,
-  content: React.ReactNode,
+  content: ReactNode,
   options: { compact?: boolean } = {}
 ) {
   const itemDragEnabled = editable && supportsItemDrag(section);
@@ -279,7 +280,7 @@ function renderItemShell(
       className={`${shellClasses} ${hoverClasses} ${dropClasses} ${dragStateClass}`}
       onDragEnter={
         itemDragEnabled
-          ? (event) => {
+          ? (event: DragEvent<HTMLDivElement>) => {
               event.preventDefault();
               event.stopPropagation();
               onItemDragEnter?.(section.id, item.id);
@@ -288,7 +289,7 @@ function renderItemShell(
       }
       onDragOver={
         itemDragEnabled
-          ? (event) => {
+          ? (event: DragEvent<HTMLDivElement>) => {
               event.preventDefault();
               event.stopPropagation();
             }
@@ -296,7 +297,7 @@ function renderItemShell(
       }
       onDrop={
         itemDragEnabled
-          ? (event) => {
+          ? (event: DragEvent<HTMLDivElement>) => {
               event.preventDefault();
               event.stopPropagation();
               onItemDrop?.(section.id, item.id);
@@ -307,11 +308,11 @@ function renderItemShell(
       {itemDragEnabled && (
         <div
           draggable
-          onDragStart={(event) => {
+          onDragStart={(event: DragEvent<HTMLDivElement>) => {
             event.stopPropagation();
             onItemDragStart?.(section.id, item.id);
           }}
-          onDragEnd={(event) => {
+          onDragEnd={(event: DragEvent<HTMLDivElement>) => {
             event.stopPropagation();
             onItemDragEnd?.();
           }}
@@ -333,8 +334,8 @@ function renderItemShell(
   function renderItemList(
     section: ResumeSection,
     items: ResumeSectionItem[],
-    renderItem: (item: ResumeSectionItem, index: number) => React.ReactNode,
-    emptyState: React.ReactNode,
+    renderItem: (item: ResumeSectionItem, index: number) => ReactNode,
+    emptyState: ReactNode,
     options: {
       gapClassName: string;
       compactItems?: boolean;
@@ -349,7 +350,7 @@ function renderItemShell(
         className={options.gapClassName}
         onDragOver={
           itemDragEnabled
-            ? (event) => {
+            ? (event: DragEvent<HTMLDivElement>) => {
                 event.preventDefault();
                 event.stopPropagation();
               }
@@ -357,7 +358,7 @@ function renderItemShell(
         }
         onDrop={
           itemDragEnabled
-            ? (event) => {
+            ? (event: DragEvent<HTMLDivElement>) => {
                 event.preventDefault();
                 event.stopPropagation();
                 onItemListDrop?.(section.id);
@@ -979,7 +980,7 @@ function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
       key={section.id}
       onDragEnter={
         sectionDropEnabled
-          ? (event) => {
+          ? (event: DragEvent<HTMLDivElement>) => {
               event.preventDefault();
               onSectionDragEnter?.(section.id);
             }
@@ -987,14 +988,14 @@ function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
       }
       onDragOver={
         sectionDropEnabled
-          ? (event) => {
+          ? (event: DragEvent<HTMLDivElement>) => {
               event.preventDefault();
             }
           : undefined
       }
       onDrop={
         sectionDropEnabled
-          ? (event) => {
+          ? (event: DragEvent<HTMLDivElement>) => {
               event.preventDefault();
               onSectionDrop?.(section.id);
             }
@@ -1006,11 +1007,11 @@ function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
         <div className="mb-3 flex items-center gap-2">
           <div
             draggable
-            onDragStart={(event) => {
+            onDragStart={(event: DragEvent<HTMLDivElement>) => {
               event.stopPropagation();
               onSectionDragStart?.(section.id);
             }}
-            onDragEnd={(event) => {
+            onDragEnd={(event: DragEvent<HTMLDivElement>) => {
               event.stopPropagation();
               onSectionDragEnd?.();
             }}
@@ -1041,14 +1042,14 @@ function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
           }`}
           onDragOver={
             editable && !draggedItem
-              ? (event) => {
+              ? (event: DragEvent<HTMLDivElement>) => {
                   event.preventDefault();
                 }
               : undefined
           }
           onDrop={
             editable && !draggedItem
-              ? (event) => {
+              ? (event: DragEvent<HTMLDivElement>) => {
                   event.preventDefault();
                   onZoneDrop?.("sidebar");
                 }
@@ -1064,14 +1065,14 @@ function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
           className={`px-8 py-10 md:px-10 ${editable ? "min-h-[1100px]" : ""}`}
           onDragOver={
             editable && !draggedItem
-              ? (event) => {
+              ? (event: DragEvent<HTMLDivElement>) => {
                   event.preventDefault();
                 }
               : undefined
           }
           onDrop={
             editable && !draggedItem
-              ? (event) => {
+              ? (event: DragEvent<HTMLDivElement>) => {
                   event.preventDefault();
                   onZoneDrop?.("main");
                 }
