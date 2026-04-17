@@ -55,6 +55,16 @@ const customSectionSchema = z.object({
   entries: z.array(customSectionEntrySchema),
 });
 
+const sectionVisibilitySchema = z.object({
+  personalDetails: z.boolean(),
+  summary: z.boolean(),
+  experience: z.boolean(),
+  education: z.boolean(),
+  skills: z.boolean(),
+  projects: z.boolean(),
+  certifications: z.boolean(),
+});
+
 export const resumeFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   template: z.string().min(1),
@@ -79,6 +89,7 @@ export const resumeFormSchema = z.object({
     projects: z.array(projectItemSchema),
     certifications: z.array(certificationItemSchema),
     customSections: z.array(customSectionSchema),
+    sectionVisibility: sectionVisibilitySchema,
   }),
 });
 

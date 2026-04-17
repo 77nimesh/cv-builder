@@ -1,4 +1,5 @@
 import type { ResumeTemplateRecordLike } from "@/components/templates/types";
+import { resolveResumeTheme } from "@/components/templates/theme-presets";
 
 export const RESUME_TEMPLATE_IDS = ["modern-1", "modern-2"] as const;
 
@@ -8,7 +9,8 @@ export type ResumeTemplateDefinition = {
   id: ResumeTemplateId;
   label: string;
   printWrapperClassName?: string;
-  printBackgroundClassName?: string;
+  printBackgroundSide?: "left" | "right";
+  printBackgroundWidthClassName?: string;
 };
 
 export const resumeTemplateRegistry: Record<
@@ -19,15 +21,15 @@ export const resumeTemplateRegistry: Record<
     id: "modern-1",
     label: "Modern 1",
     printWrapperClassName: "relative mx-auto w-[794px] bg-white print:w-full",
-    printBackgroundClassName:
-      "pointer-events-none fixed inset-y-0 left-0 hidden w-[280px] bg-slate-900 print:block",
+    printBackgroundSide: "left",
+    printBackgroundWidthClassName: "w-[280px]",
   },
   "modern-2": {
     id: "modern-2",
     label: "Modern 2",
     printWrapperClassName: "relative mx-auto w-[794px] bg-white print:w-full",
-    printBackgroundClassName:
-      "pointer-events-none fixed inset-y-0 right-0 hidden w-[260px] bg-slate-100 print:block",
+    printBackgroundSide: "right",
+    printBackgroundWidthClassName: "w-[260px]",
   },
 };
 
@@ -61,4 +63,14 @@ export function getResumeTemplateDefinitionForRecord(
   resume: ResumeTemplateRecordLike
 ): ResumeTemplateDefinition {
   return getResumeTemplateDefinition(getActiveResumeTemplateId(resume));
+}
+
+export function getResumeTemplatePrintBackgroundColor(
+  template: string | null | undefined,
+  themeColor: string | null | undefined
+) {
+  const templateId = resolveResumeTemplateId(template);
+  const theme = resolveResumeTheme(themeColor);
+
+  return templateId === "modern-1" ? theme.primary : theme.softBackground;
 }

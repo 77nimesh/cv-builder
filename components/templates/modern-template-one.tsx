@@ -17,6 +17,8 @@ import {
   getSummaryText,
   getVisibleSections,
 } from "@/lib/resume/selectors";
+import { resolveResumeTheme } from "@/components/templates/theme-presets";
+import { resolveResumeFont } from "@/components/templates/font-presets";
 
 type DraggedItemState = {
   sectionId: string;
@@ -216,6 +218,8 @@ export default function ModernTemplateOne({
   const visibleSections = getVisibleSections(data);
   const normalizedPhotoPath = photoPath?.trim() ?? "";
   const photoShape = data.layout.photoShape === "circle" ? "circle" : "square";
+  const theme = resolveResumeTheme(data.layout.themeColor);
+  const font = resolveResumeFont(data.layout.fontFamily);
 
   const sidebarSections = visibleSections.filter(
     (section) => section.zone === "sidebar"
@@ -276,8 +280,8 @@ function renderItemShell(
 
   return (
     <div
-      key={`${section.id}-${item.position}-${item.id}`}
-      className={`${shellClasses} ${hoverClasses} ${dropClasses} ${dragStateClass}`}
+      key={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>o</mi><mi>n</mi><mi mathvariant="normal">.</mi><mi>i</mi><mi>d</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{section.id}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">sec</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mord mathnormal">n</span><span class="mord">.</span><span class="mord mathnormal">i</span><span class="mord mathnormal">d</span></span><span class="mord">−</span></span></span></span>{item.position}-${item.id}`}
+      className={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mi>h</mi><mi>e</mi><mi>l</mi><mi>l</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{shellClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">h</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{hoverClasses} <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>r</mi><mi>o</mi><mi>p</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{dropClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.07153em;">pC</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{dragStateClass}`}
       onDragEnter={
         itemDragEnabled
           ? (event: DragEvent<HTMLDivElement>) => {
@@ -428,10 +432,10 @@ function renderItemShell(
 
     return (
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: theme.accentText }}>
           {section.title || "Custom Section"}
         </h2>
-        <div className="mt-4 h-px bg-slate-200" />
+        <div className="mt-4 h-px" style={{ backgroundColor: theme.softBorder }} />
 
         <div className="mt-6">
           {renderItemList(
@@ -631,10 +635,10 @@ function renderItemShell(
       case "summary":
         return (
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: theme.accentText }}>
               {section.title || "Profile"}
             </h2>
-            <div className="mt-4 h-px bg-slate-200" />
+            <div className="mt-4 h-px" style={{ backgroundColor: theme.softBorder }} />
             <p className="mt-6 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
               {summary ||
                 "Write a short professional summary that highlights your strengths, experience, and goals."}
@@ -647,10 +651,10 @@ function renderItemShell(
 
         return (
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: theme.accentText }}>
               {section.title || "Experience"}
             </h2>
-            <div className="mt-4 h-px bg-slate-200" />
+            <div className="mt-4 h-px" style={{ backgroundColor: theme.softBorder }} />
 
             <div className="mt-6">
               {renderItemList(
@@ -710,10 +714,10 @@ function renderItemShell(
 
         return (
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: theme.accentText }}>
               {section.title || "Education"}
             </h2>
-            <div className="mt-4 h-px bg-slate-200" />
+            <div className="mt-4 h-px" style={{ backgroundColor: theme.softBorder }} />
 
             <div className="mt-6">
               {renderItemList(
@@ -770,10 +774,10 @@ function renderItemShell(
 
         return (
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: theme.accentText }}>
               {section.title || "Projects"}
             </h2>
-            <div className="mt-4 h-px bg-slate-200" />
+            <div className="mt-4 h-px" style={{ backgroundColor: theme.softBorder }} />
 
             <div className="mt-6">
               {renderItemList(
@@ -828,10 +832,10 @@ function renderItemShell(
 
   return (
     <div>
-      <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: theme.accentText }}>
         {section.title || "Skills"}
       </h2>
-      <div className="mt-4 h-px bg-slate-200" />
+      <div className="mt-4 h-px" style={{ backgroundColor: theme.softBorder }} />
 
       <div className="mt-6 flex flex-wrap gap-3">
         {items.length === 0 ? (
@@ -849,8 +853,8 @@ function renderItemShell(
 
             return (
               <div
-                key={`${section.id}-${index}-${item.id}`}
-                className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700"
+                key={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>o</mi><mi>n</mi><mi mathvariant="normal">.</mi><mi>i</mi><mi>d</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{section.id}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">sec</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mord mathnormal">n</span><span class="mord">.</span><span class="mord mathnormal">i</span><span class="mord mathnormal">d</span></span><span class="mord">−</span></span></span></span>{index}-${item.id}`}
+                className="rounded-full px-4 py-2 text-sm" style={{ backgroundColor: theme.softBackground, color: theme.accentText, border: `1px solid ${theme.softBorder}` }}
               >
                 {skill.name}
                 {hasText(skill.level) ? `  |  ${skill.level}` : ""}
@@ -868,10 +872,10 @@ function renderItemShell(
 
         return (
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: theme.accentText }}>
               {section.title || "Certifications"}
             </h2>
-            <div className="mt-4 h-px bg-slate-200" />
+            <div className="mt-4 h-px" style={{ backgroundColor: theme.softBorder }} />
 
             <div className="mt-6">
               {renderItemList(
@@ -935,7 +939,7 @@ function renderItemShell(
             <h2 className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
               Contact
             </h2>
-            <div className="mt-4 h-px bg-slate-200" />
+            <div className="mt-4 h-px" style={{ backgroundColor: theme.softBorder }} />
             <div className="mt-6 space-y-2 text-[15px] leading-7 text-slate-700">
               {hasText(personal.fullName) && <p>{personal.fullName}</p>}
               {hasText(personal.email) && <p>{personal.email}</p>}
@@ -1001,7 +1005,7 @@ function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
             }
           : undefined
       }
-      className={`rounded-2xl px-2 py-2 ${interactiveClasses} ${dropClasses} ${dragStateClass}`}
+      className={`rounded-2xl px-2 py-2 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>n</mi><mi>t</mi><mi>e</mi><mi>r</mi><mi>a</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>v</mi><mi>e</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{interactiveClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">er</span><span class="mord mathnormal">a</span><span class="mord mathnormal">c</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{dropClasses} ${dragStateClass}`}
     >
       {editable && (
         <div className="mb-3 flex items-center gap-2">
@@ -1034,12 +1038,16 @@ function renderSectionShell(section: ResumeSection, zone: ResumeZone) {
 }
 
   return (
-    <div className="mx-auto w-full max-w-[850px] rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 print:max-w-none print:rounded-none print:bg-transparent print:shadow-none print:ring-0">
+    <div
+      className="mx-auto w-full max-w-[850px] rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 print:max-w-none print:rounded-none print:bg-transparent print:shadow-none print:ring-0"
+      style={{ fontFamily: font.cssStack }}
+    >
       <div className="grid min-h-[1100px] grid-cols-1 md:grid-cols-[280px_1fr] print:grid-cols-[280px_1fr]">
         <aside
-          className={`bg-slate-900 px-8 py-10 text-white print:bg-transparent ${
+          className={`px-8 py-10 text-white print:bg-transparent ${
             editable ? "min-h-[1100px]" : ""
           }`}
+          style={{ backgroundColor: theme.primary }}
           onDragOver={
             editable && !draggedItem
               ? (event: DragEvent<HTMLDivElement>) => {

@@ -67,6 +67,16 @@ export type CustomSectionFormSection = {
   entries: CustomSectionEntry[];
 };
 
+export type BuiltInSectionVisibility = {
+  personalDetails: boolean;
+  summary: boolean;
+  experience: boolean;
+  education: boolean;
+  skills: boolean;
+  projects: boolean;
+  certifications: boolean;
+};
+
 export type ResumeLegacyData = {
   personal: PersonalDetails;
   summary: string;
@@ -76,6 +86,7 @@ export type ResumeLegacyData = {
   projects: ProjectItem[];
   certifications: CertificationItem[];
   customSections: CustomSectionFormSection[];
+  sectionVisibility: BuiltInSectionVisibility;
 };
 
 export type ResumeFormData = ResumeLegacyData;

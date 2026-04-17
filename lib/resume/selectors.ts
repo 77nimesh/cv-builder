@@ -1,5 +1,6 @@
 import type {
   CertificationItem,
+  BuiltInSectionVisibility,
   CustomSectionEntry,
   CustomSectionFormSection,
   EducationItem,
@@ -13,6 +14,7 @@ import type {
   SkillItem,
 } from "@/lib/types";
 import {
+  defaultBuiltInSectionVisibility,
   defaultCertificationItem,
   defaultCustomSectionEntry,
   defaultEducationItem,
@@ -225,6 +227,42 @@ export function getCertificationItems(data: ResumeData): CertificationItem[] {
   );
 }
 
+
+export function getSectionVisibilityFormData(
+  data: ResumeData
+): BuiltInSectionVisibility {
+  return {
+    personalDetails: readBoolean(
+      getSection(data, "personal-details")?.visible,
+      defaultBuiltInSectionVisibility.personalDetails
+    ),
+    summary: readBoolean(
+      getSection(data, "summary")?.visible,
+      defaultBuiltInSectionVisibility.summary
+    ),
+    experience: readBoolean(
+      getSection(data, "experience")?.visible,
+      defaultBuiltInSectionVisibility.experience
+    ),
+    education: readBoolean(
+      getSection(data, "education")?.visible,
+      defaultBuiltInSectionVisibility.education
+    ),
+    skills: readBoolean(
+      getSection(data, "skills")?.visible,
+      defaultBuiltInSectionVisibility.skills
+    ),
+    projects: readBoolean(
+      getSection(data, "projects")?.visible,
+      defaultBuiltInSectionVisibility.projects
+    ),
+    certifications: readBoolean(
+      getSection(data, "certifications")?.visible,
+      defaultBuiltInSectionVisibility.certifications
+    ),
+  };
+}
+
 export function getCustomSectionFormData(
   data: ResumeData
 ): CustomSectionFormSection[] {
@@ -247,5 +285,6 @@ export function getResumeFormData(data: ResumeData): ResumeFormData {
     projects: getProjectItems(data),
     certifications: getCertificationItems(data),
     customSections: getCustomSectionFormData(data),
+    sectionVisibility: getSectionVisibilityFormData(data),
   };
 }

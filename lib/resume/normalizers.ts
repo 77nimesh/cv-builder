@@ -17,6 +17,7 @@ import type {
 } from "@/lib/types";
 import {
   createDefaultResumeData,
+  defaultBuiltInSectionVisibility,
   defaultCertificationItem,
   defaultCustomSectionEntry,
   defaultEducationItem,
@@ -89,7 +90,7 @@ function isBrokenGeneratedId(value: string) {
 }
 
 function buildSafeItemId(prefix: string, position: number) {
-  return `${prefix}-${position + 1}`;
+  return `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>p</mi><mi>r</mi><mi>e</mi><mi>f</mi><mi>i</mi><mi>x</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{prefix}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">i</span><span class="mord mathnormal">x</span></span><span class="mord">−</span></span></span></span>{position + 1}`;
 }
 
 function buildSafeSectionId(position: number) {
@@ -335,7 +336,7 @@ function normalizeSectionItems(
       }
 
       while (seenIds.has(nextId)) {
-        nextId = `${buildSafeItemId(fallbackPrefix, index)}-${seenIds.size + 1}`;
+        nextId = `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>b</mi><mi>u</mi><mi>i</mi><mi>l</mi><mi>d</mi><mi>S</mi><mi>a</mi><mi>f</mi><mi>e</mi><mi>I</mi><mi>t</mi><mi>e</mi><mi>m</mi><mi>I</mi><mi>d</mi><mo stretchy="false">(</mo><mi>f</mi><mi>a</mi><mi>l</mi><mi>l</mi><mi>b</mi><mi>a</mi><mi>c</mi><mi>k</mi><mi>P</mi><mi>r</mi><mi>e</mi><mi>f</mi><mi>i</mi><mi>x</mi><mo separator="true">,</mo><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi><mo stretchy="false">)</mo></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{buildSafeItemId(fallbackPrefix, index)}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="mord mathnormal">u</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.07847em;">I</span><span class="mord mathnormal">t</span><span class="mord mathnormal">e</span><span class="mord mathnormal">m</span><span class="mord mathnormal" style="margin-right:0.07847em;">I</span><span class="mord mathnormal">d</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">ba</span><span class="mord mathnormal">c</span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">i</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span><span class="mord">−</span></span></span></span>{seenIds.size + 1}`;
       }
 
       seenIds.add(nextId);
@@ -409,13 +410,13 @@ function buildUniqueSectionId(
     const safeBase =
       section.type === "custom"
         ? buildSafeSectionId(fallbackPosition)
-        : `${section.id}-${fallbackPosition + 1}`;
+        : `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>o</mi><mi>n</mi><mi mathvariant="normal">.</mi><mi>i</mi><mi>d</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{section.id}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">sec</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mord mathnormal">n</span><span class="mord">.</span><span class="mord mathnormal">i</span><span class="mord mathnormal">d</span></span><span class="mord">−</span></span></span></span>{fallbackPosition + 1}`;
 
     nextId = safeBase;
 
     let suffix = 2;
     while (seenIds.has(nextId)) {
-      nextId = `${safeBase}-${suffix}`;
+      nextId = `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>a</mi><mi>f</mi><mi>e</mi><mi>B</mi><mi>a</mi><mi>s</mi><mi>e</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{safeBase}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mord mathnormal">a</span><span class="mord mathnormal">se</span></span><span class="mord">−</span></span></span></span>{suffix}`;
       suffix += 1;
     }
   }
@@ -551,6 +552,10 @@ export function buildResumeDataFromFormData(
       case "personal-details":
         return {
           ...section,
+          visible: readBoolean(
+            formData.sectionVisibility?.personalDetails,
+            defaultBuiltInSectionVisibility.personalDetails
+          ),
           items: [
             {
               id: "personal-details-1",
@@ -562,6 +567,10 @@ export function buildResumeDataFromFormData(
       case "summary":
         return {
           ...section,
+          visible: readBoolean(
+            formData.sectionVisibility?.summary,
+            defaultBuiltInSectionVisibility.summary
+          ),
           items: [
             {
               id: "summary-1",
@@ -573,26 +582,46 @@ export function buildResumeDataFromFormData(
       case "experience":
         return {
           ...section,
+          visible: readBoolean(
+            formData.sectionVisibility?.experience,
+            defaultBuiltInSectionVisibility.experience
+          ),
           items: normalizeSectionItems("experience", formData.experience, "experience"),
         };
       case "education":
         return {
           ...section,
+          visible: readBoolean(
+            formData.sectionVisibility?.education,
+            defaultBuiltInSectionVisibility.education
+          ),
           items: normalizeSectionItems("education", formData.education, "education"),
         };
       case "skills":
         return {
           ...section,
+          visible: readBoolean(
+            formData.sectionVisibility?.skills,
+            defaultBuiltInSectionVisibility.skills
+          ),
           items: normalizeSectionItems("skills", formData.skills, "skills"),
         };
       case "projects":
         return {
           ...section,
+          visible: readBoolean(
+            formData.sectionVisibility?.projects,
+            defaultBuiltInSectionVisibility.projects
+          ),
           items: normalizeSectionItems("projects", formData.projects, "projects"),
         };
       case "certifications":
         return {
           ...section,
+          visible: readBoolean(
+            formData.sectionVisibility?.certifications,
+            defaultBuiltInSectionVisibility.certifications
+          ),
           items: normalizeSectionItems(
             "certifications",
             formData.certifications,

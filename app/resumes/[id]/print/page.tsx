@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import ResumePreview from "@/components/preview/resume-preview";
-import { getResumeTemplateDefinitionForRecord } from "@/components/templates/template-registry";
+import {
+  getResumeTemplateDefinitionForRecord,
+  getResumeTemplatePrintBackgroundColor,
+} from "@/components/templates/template-registry";
 import { prisma } from "@/lib/prisma";
 import { normalizeResumeRecord } from "@/lib/resume/record";
 
@@ -26,6 +29,10 @@ export default async function PrintResumePage({
   const normalizedResume = normalizeResumeRecord(resume);
   const templateDefinition =
     getResumeTemplateDefinitionForRecord(normalizedResume);
+  const printBackgroundColor = getResumeTemplatePrintBackgroundColor(
+    templateDefinition.id,
+    normalizedResume.data.layout.themeColor
+  );
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -65,10 +72,13 @@ export default async function PrintResumePage({
           "relative mx-auto w-[794px] bg-white print:w-full"
         }
       >
-        {templateDefinition.printBackgroundClassName ? (
+        {templateDefinition.printBackgroundSide ? (
           <div
             aria-hidden
-            className={templateDefinition.printBackgroundClassName}
+            className={`pointer-events-none fixed inset-y-0 hidden print:block ${
+              templateDefinition.printBackgroundSide === "left" ? "left-0" : "right-0"
+            } ${templateDefinition.printBackgroundWidthClassName ?? "w-[280px]"}`}
+            style={{ backgroundColor: printBackgroundColor }}
           />
         ) : null}
 

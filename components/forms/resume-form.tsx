@@ -10,6 +10,16 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import PhotoUploadField from "@/components/forms/photo-upload-field";
+import {
+  DEFAULT_RESUME_THEME_ID,
+  RESUME_THEME_PRESETS,
+  resolveResumeTheme,
+} from "@/components/templates/theme-presets";
+import {
+  DEFAULT_RESUME_FONT_ID,
+  RESUME_FONT_PRESETS,
+  resolveResumeFont,
+} from "@/components/templates/font-presets";
 import type { ResumeRecord } from "@/lib/types";
 import { getResumeFormData } from "@/lib/resume/selectors";
 import {
@@ -28,6 +38,150 @@ import {
 type ResumeFormProps = {
   resume: ResumeRecord;
 };
+
+const BUILT_IN_SECTION_VISIBILITY_OPTIONS: Array<{
+  field: keyof ResumeFormValues["data"]["sectionVisibility"];
+  label: string;
+  description: string;
+}> = [
+  {
+    field: "personalDetails",
+    label: "Personal Details",
+    description: "Name, contact details, headline, and photo",
+  },
+  {
+    field: "summary",
+    label: "Professional Summary",
+    description: "Short introduction or profile summary",
+  },
+  {
+    field: "experience",
+    label: "Experience",
+    description: "Employment history and achievements",
+  },
+  {
+    field: "education",
+    label: "Education",
+    description: "Degrees, certificates, and study history",
+  },
+  {
+    field: "skills",
+    label: "Skills",
+    description: "Skill list or capability tags",
+  },
+  {
+    field: "projects",
+    label: "Projects",
+    description: "Portfolio, coursework, or personal projects",
+  },
+  {
+    field: "certifications",
+    label: "Certifications",
+    description: "Licences, badges, and formal certifications",
+  },
+];
+
+type ThemeColorDropdownProps = {
+  value: string;
+  onChange: (nextThemeId: string) => void;
+};
+
+function ThemeColorDropdown({
+  value,
+  onChange,
+}: ThemeColorDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeTheme = resolveResumeTheme(value || DEFAULT_RESUME_THEME_ID);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex w-full items-center justify-between rounded-xl border border-slate-300 px-4 py-3 text-left outline-none"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span
+            className="h-4 w-4 shrink-0 rounded-full border border-black/10"
+            style={{ backgroundColor: activeTheme.primary }}
+            aria-hidden
+          />
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-medium text-slate-900">
+              {activeTheme.label}
+            </span>
+            <span className="block truncate text-xs text-slate-500">
+              {activeTheme.description}
+            </span>
+          </span>
+        </span>
+
+        <span className="ml-3 text-xs text-slate-500">{isOpen ? "▲" : "▼"}</span>
+      </button>
+
+      {isOpen ? (
+        <div
+          className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
+          role="listbox"
+          aria-label="Theme Color"
+        >
+          {RESUME_THEME_PRESETS.map((themeOption) => {
+            const isActive = themeOption.id === activeTheme.id;
+
+            return (
+              <button
+                key={themeOption.id}
+                type="button"
+                onClick={() => {
+                  onChange(themeOption.id);
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
+                  isActive
+                    ? "bg-slate-100 ring-1 ring-slate-300"
+                    : "hover:bg-slate-50"
+                }`}
+                role="option"
+                aria-selected={isActive}
+              >
+                <span
+                  className="h-4 w-4 shrink-0 rounded-full border border-black/10"
+                  style={{ backgroundColor: themeOption.primary }}
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-slate-900">
+                    {themeOption.label}
+                  </span>
+                  <span className="block truncate text-xs text-slate-500">
+                    {themeOption.description}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 type CustomSectionFieldsProps = {
   index: number;
@@ -139,7 +293,7 @@ function CustomSectionFields({
                   <label className="mb-2 block text-sm font-medium">Title</label>
                   <input
                     {...register(
-                      `data.customSections.${index}.entries.${entryIndex}.title` as const
+                      `data.customSections.<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><mi mathvariant="normal">.</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>r</mi><mi>i</mi><mi>e</mi><mi>s</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">{index}.entries.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span></span><span class="mord">.</span><span class="mord mathnormal">e</span><span class="mord mathnormal">n</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">i</span><span class="mord mathnormal">es</span><span class="mord">.</span></span></span></span>{entryIndex}.title` as const
                     )}
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
                     placeholder="Dean’s List"
@@ -150,7 +304,7 @@ function CustomSectionFields({
                   <label className="mb-2 block text-sm font-medium">Subtitle</label>
                   <input
                     {...register(
-                      `data.customSections.${index}.entries.${entryIndex}.subtitle` as const
+                      `data.customSections.<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><mi mathvariant="normal">.</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>r</mi><mi>i</mi><mi>e</mi><mi>s</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">{index}.entries.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span></span><span class="mord">.</span><span class="mord mathnormal">e</span><span class="mord mathnormal">n</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">i</span><span class="mord mathnormal">es</span><span class="mord">.</span></span></span></span>{entryIndex}.subtitle` as const
                     )}
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
                     placeholder="University of Adelaide"
@@ -161,7 +315,7 @@ function CustomSectionFields({
                   <label className="mb-2 block text-sm font-medium">Meta</label>
                   <input
                     {...register(
-                      `data.customSections.${index}.entries.${entryIndex}.meta` as const
+                      `data.customSections.<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><mi mathvariant="normal">.</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>r</mi><mi>i</mi><mi>e</mi><mi>s</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">{index}.entries.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span></span><span class="mord">.</span><span class="mord mathnormal">e</span><span class="mord mathnormal">n</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">i</span><span class="mord mathnormal">es</span><span class="mord">.</span></span></span></span>{entryIndex}.meta` as const
                     )}
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
                     placeholder="2024 • Adelaide"
@@ -173,7 +327,7 @@ function CustomSectionFields({
                 <label className="mb-2 block text-sm font-medium">Description</label>
                 <textarea
                   {...register(
-                    `data.customSections.${index}.entries.${entryIndex}.description` as const
+                    `data.customSections.<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><mi mathvariant="normal">.</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>r</mi><mi>i</mi><mi>e</mi><mi>s</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">{index}.entries.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span></span><span class="mord">.</span><span class="mord mathnormal">e</span><span class="mord mathnormal">n</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">i</span><span class="mord mathnormal">es</span><span class="mord">.</span></span></span></span>{entryIndex}.description` as const
                   )}
                   rows={4}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
@@ -198,8 +352,14 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
     defaultValues: {
       title: resume.title,
       template: resume.template,
-      themeColor: resume.themeColor ?? resume.data.layout.themeColor ?? "",
-      fontFamily: resume.fontFamily ?? resume.data.layout.fontFamily ?? "",
+      themeColor:
+        resume.themeColor ??
+        resume.data.layout.themeColor ??
+        DEFAULT_RESUME_THEME_ID,
+      fontFamily:
+        resume.fontFamily ??
+        resume.data.layout.fontFamily ??
+        DEFAULT_RESUME_FONT_ID,
       photoPath: resume.photoPath ?? "",
       photoShape: resume.data.layout.photoShape ?? "square",
       data: getResumeFormData(resume.data),
@@ -325,6 +485,50 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
           </div>
         </div>
 
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium">Theme Color</label>
+            <input type="hidden" {...register("themeColor")} />
+            <ThemeColorDropdown
+              value={watch("themeColor") || DEFAULT_RESUME_THEME_ID}
+              onChange={(nextThemeId) => {
+                setValue("themeColor", nextThemeId, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
+              }}
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Font Family</label>
+            <select
+              {...register("fontFamily")}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+            >
+              {RESUME_FONT_PRESETS.map((fontOption) => (
+                <option key={fontOption.id} value={fontOption.id}>
+                  {fontOption.label}
+                </option>
+              ))}
+            </select>
+            <p
+              className="mt-2 text-xs text-slate-500"
+              style={{
+                fontFamily: resolveResumeFont(
+                  watch("fontFamily") || DEFAULT_RESUME_FONT_ID
+                ).cssStack,
+              }}
+            >
+              {
+                resolveResumeFont(
+                  watch("fontFamily") || DEFAULT_RESUME_FONT_ID
+                ).description
+              }
+            </p>
+          </div>
+        </div>
+
         <div className="mt-6">
           <PhotoUploadField
             photoPath={watch("photoPath") ?? ""}
@@ -343,6 +547,43 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
             }}
           />
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold">Section Visibility</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Hidden sections stay saved in your resume data but do not render in preview, print, or PDF.
+        </p>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          {BUILT_IN_SECTION_VISIBILITY_OPTIONS.map((sectionOption) => (
+            <label
+              key={sectionOption.field}
+              className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4"
+            >
+              <input
+                type="checkbox"
+                {...register(
+                  `data.sectionVisibility.${sectionOption.field}` as const
+                )}
+                className="mt-1 h-4 w-4"
+              />
+
+              <span>
+                <span className="block text-sm font-medium text-slate-900">
+                  {sectionOption.label}
+                </span>
+                <span className="mt-1 block text-xs text-slate-500">
+                  {sectionOption.description}
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        <p className="mt-4 text-xs text-slate-500">
+          Custom sections keep their own visibility toggle inside each custom section card below.
+        </p>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

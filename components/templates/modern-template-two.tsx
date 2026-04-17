@@ -17,6 +17,8 @@ import {
   getSummaryText,
   getVisibleSections,
 } from "@/lib/resume/selectors";
+import { resolveResumeTheme } from "@/components/templates/theme-presets";
+import { resolveResumeFont } from "@/components/templates/font-presets";
 import type { ResumeTemplateProps } from "@/components/templates/types";
 
 function hasText(value: string) {
@@ -28,7 +30,7 @@ function formatDateRange(startDate: string, endDate: string) {
   const end = endDate.trim();
 
   if (start && end) {
-    return `${start} - ${end}`;
+    return `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>t</mi><mi>a</mi><mi>r</mi><mi>t</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{start} -</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6984em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">t</span></span><span class="mord">−</span></span></span></span>{end}`;
   }
 
   if (start) {
@@ -206,6 +208,8 @@ export default function ModernTemplateTwo({
   const visibleSections = getVisibleSections(data);
   const normalizedPhotoPath = photoPath?.trim() ?? "";
   const photoShape = data.layout.photoShape === "circle" ? "circle" : "square";
+  const theme = resolveResumeTheme(data.layout.themeColor);
+  const font = resolveResumeFont(data.layout.fontFamily);
 
   const sidebarSections = visibleSections.filter(
     (section) => section.zone === "sidebar"
@@ -225,8 +229,13 @@ export default function ModernTemplateTwo({
         alt={personal.fullName ? `${personal.fullName} profile photo` : "Profile photo"}
         className={
           variant === "sidebar"
-            ? `h-28 w-28 border border-slate-200 object-cover ${shapeClass}`
+            ? `h-28 w-28 border object-cover ${shapeClass}`
             : `h-32 w-32 border-4 border-white object-cover shadow-sm ${shapeClass}`
+        }
+        style={
+          variant === "sidebar"
+            ? { borderColor: theme.softBorder }
+            : undefined
         }
       />
     );
@@ -257,8 +266,8 @@ export default function ModernTemplateTwo({
 
     return (
       <div
-        key={`${section.id}-${item.position}-${item.id}`}
-        className={`${shellClasses} ${hoverClasses} ${dropClasses} ${dragStateClass}`}
+        key={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>o</mi><mi>n</mi><mi mathvariant="normal">.</mi><mi>i</mi><mi>d</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{section.id}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">sec</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mord mathnormal">n</span><span class="mord">.</span><span class="mord mathnormal">i</span><span class="mord mathnormal">d</span></span><span class="mord">−</span></span></span></span>{item.position}-${item.id}`}
+        className={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mi>h</mi><mi>e</mi><mi>l</mi><mi>l</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{shellClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">h</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{hoverClasses} <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>r</mi><mi>o</mi><mi>p</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{dropClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.07153em;">pC</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{dragStateClass}`}
         onDragEnter={
           itemDragEnabled
             ? (event: DragEvent<HTMLDivElement>) => {
@@ -361,7 +370,10 @@ export default function ModernTemplateTwo({
 
     return (
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+        <h2
+          className="text-xs font-semibold uppercase tracking-[0.25em]"
+          style={{ color: theme.accentText }}
+        >
           {section.title || "Custom Section"}
         </h2>
 
@@ -410,8 +422,11 @@ export default function ModernTemplateTwo({
     return (
       <div>
         <div className="flex items-center gap-3">
-          <div className="h-px flex-1 bg-slate-200" />
-          <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+          <div className="h-px flex-1" style={{ backgroundColor: theme.softBorder }} />
+          <h2
+            className="text-xs font-semibold uppercase tracking-[0.25em]"
+            style={{ color: theme.accentText }}
+          >
             {section.title || "Custom Section"}
           </h2>
         </div>
@@ -470,7 +485,10 @@ export default function ModernTemplateTwo({
     switch (section.type) {
       case "personal-details":
         return (
-          <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div
+            className="rounded-[28px] border bg-white p-6 shadow-sm"
+            style={{ borderColor: theme.softBorder }}
+          >
             <div className="flex flex-col items-center text-center">
               {renderProfilePhoto("sidebar") ? (
                 <div className="mb-4">{renderProfilePhoto("sidebar")}</div>
@@ -481,13 +499,19 @@ export default function ModernTemplateTwo({
               </h1>
 
               {hasText(personal.headline) ? (
-                <p className="mt-2 text-xs uppercase tracking-[0.25em] text-slate-500">
+                <p
+                  className="mt-2 text-xs uppercase tracking-[0.25em]"
+                  style={{ color: theme.accentText }}
+                >
                   {personal.headline}
                 </p>
               ) : null}
             </div>
 
-            <div className="mt-6 space-y-3 border-t border-slate-200 pt-6 text-sm text-slate-700">
+            <div
+              className="mt-6 space-y-3 border-t pt-6 text-sm text-slate-700"
+              style={{ borderColor: theme.softBorder }}
+            >
               {hasText(personal.email) && (
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
@@ -535,7 +559,10 @@ export default function ModernTemplateTwo({
       case "summary":
         return (
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <h2
+              className="text-xs font-semibold uppercase tracking-[0.25em]"
+              style={{ color: theme.accentText }}
+            >
               {section.title || "Profile"}
             </h2>
             <p className="mt-4 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
@@ -550,7 +577,10 @@ export default function ModernTemplateTwo({
 
         return (
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <h2
+              className="text-xs font-semibold uppercase tracking-[0.25em]"
+              style={{ color: theme.accentText }}
+            >
               {section.title || "Skills"}
             </h2>
 
@@ -563,8 +593,13 @@ export default function ModernTemplateTwo({
 
                   return (
                     <div
-                      key={`${section.id}-${item.id}`}
-                      className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700"
+                      key={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>o</mi><mi>n</mi><mi mathvariant="normal">.</mi><mi>i</mi><mi>d</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{section.id}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">sec</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mord mathnormal">n</span><span class="mord">.</span><span class="mord mathnormal">i</span><span class="mord mathnormal">d</span></span><span class="mord">−</span></span></span></span>{item.id}`}
+                      className="rounded-full px-3 py-1.5 text-sm"
+                      style={{
+                        backgroundColor: theme.softBackground,
+                        color: theme.accentText,
+                        border: `1px solid ${theme.softBorder}`,
+                      }}
                     >
                       {skill.name}
                       {hasText(skill.level) ? ` • ${skill.level}` : ""}
@@ -582,7 +617,10 @@ export default function ModernTemplateTwo({
 
         return (
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <h2
+              className="text-xs font-semibold uppercase tracking-[0.25em]"
+              style={{ color: theme.accentText }}
+            >
               {section.title || "Certifications"}
             </h2>
 
@@ -633,7 +671,10 @@ export default function ModernTemplateTwo({
       default:
         return (
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <h2
+              className="text-xs font-semibold uppercase tracking-[0.25em]"
+              style={{ color: theme.accentText }}
+            >
               {section.title}
             </h2>
             <p className="mt-3 text-sm text-slate-500">
@@ -648,22 +689,25 @@ export default function ModernTemplateTwo({
     switch (section.type) {
       case "personal-details":
         return (
-          <div className="overflow-hidden rounded-[32px] bg-slate-900 text-white">
+          <div
+            className="overflow-hidden rounded-[32px] text-white"
+            style={{ backgroundColor: theme.primary }}
+          >
             <div className="flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
                   Resume Profile
                 </p>
                 <h1 className="mt-3 break-words text-4xl font-bold leading-tight">
                   {personal.fullName || "Your Name"}
                 </h1>
                 {hasText(personal.headline) ? (
-                  <p className="mt-3 text-sm uppercase tracking-[0.22em] text-slate-300">
+                  <p className="mt-3 text-sm uppercase tracking-[0.22em] text-white/75">
                     {personal.headline}
                   </p>
                 ) : null}
 
-                <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-100">
+                <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/95">
                   {hasText(personal.email) && <p className="break-words">{personal.email}</p>}
                   {hasText(personal.phone) && <p>{personal.phone}</p>}
                   {hasText(personal.location) && <p>{personal.location}</p>}
@@ -689,10 +733,13 @@ export default function ModernTemplateTwo({
         return (
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <h2
+                className="text-xs font-semibold uppercase tracking-[0.25em]"
+                style={{ color: theme.accentText }}
+              >
                 {section.title || "Profile"}
               </h2>
-              <div className="h-px flex-1 bg-slate-200" />
+              <div className="h-px flex-1" style={{ backgroundColor: theme.softBorder }} />
             </div>
 
             <p className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
@@ -708,10 +755,13 @@ export default function ModernTemplateTwo({
         return (
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <h2
+                className="text-xs font-semibold uppercase tracking-[0.25em]"
+                style={{ color: theme.accentText }}
+              >
                 {section.title || "Experience"}
               </h2>
-              <div className="h-px flex-1 bg-slate-200" />
+              <div className="h-px flex-1" style={{ backgroundColor: theme.softBorder }} />
             </div>
 
             <div className="mt-6">
@@ -722,7 +772,10 @@ export default function ModernTemplateTwo({
                   const experience = readExperienceItem(item.content);
 
                   return (
-                    <div className="border-l-2 border-slate-200 pl-5">
+                    <div
+                      className="border-l-2 pl-5"
+                      style={{ borderColor: theme.softBorder }}
+                    >
                       <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
                         <div>
                           <h3 className="text-lg font-semibold text-slate-900">
@@ -768,10 +821,13 @@ export default function ModernTemplateTwo({
         return (
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <h2
+                className="text-xs font-semibold uppercase tracking-[0.25em]"
+                style={{ color: theme.accentText }}
+              >
                 {section.title || "Education"}
               </h2>
-              <div className="h-px flex-1 bg-slate-200" />
+              <div className="h-px flex-1" style={{ backgroundColor: theme.softBorder }} />
             </div>
 
             <div className="mt-6">
@@ -782,7 +838,13 @@ export default function ModernTemplateTwo({
                   const education = readEducationItem(item.content);
 
                   return (
-                    <div className="rounded-2xl bg-slate-50 px-5 py-5">
+                    <div
+                      className="rounded-2xl px-5 py-5"
+                      style={{
+                        backgroundColor: theme.softBackground,
+                        border: `1px solid ${theme.softBorder}`,
+                      }}
+                    >
                       <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
                         <div>
                           <h3 className="text-lg font-semibold text-slate-900">
@@ -828,10 +890,13 @@ export default function ModernTemplateTwo({
         return (
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <h2
+                className="text-xs font-semibold uppercase tracking-[0.25em]"
+                style={{ color: theme.accentText }}
+              >
                 {section.title || "Projects"}
               </h2>
-              <div className="h-px flex-1 bg-slate-200" />
+              <div className="h-px flex-1" style={{ backgroundColor: theme.softBorder }} />
             </div>
 
             <div className="mt-6">
@@ -842,7 +907,10 @@ export default function ModernTemplateTwo({
                   const project = readProjectItem(item.content);
 
                   return (
-                    <div className="rounded-2xl border border-slate-200 px-5 py-5">
+                    <div
+                      className="rounded-2xl px-5 py-5"
+                      style={{ border: `1px solid ${theme.softBorder}` }}
+                    >
                       <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
                         <div>
                           <h3 className="text-lg font-semibold text-slate-900">
@@ -886,10 +954,13 @@ export default function ModernTemplateTwo({
         return (
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <h2
+                className="text-xs font-semibold uppercase tracking-[0.25em]"
+                style={{ color: theme.accentText }}
+              >
                 {section.title || "Skills"}
               </h2>
-              <div className="h-px flex-1 bg-slate-200" />
+              <div className="h-px flex-1" style={{ backgroundColor: theme.softBorder }} />
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -903,8 +974,12 @@ export default function ModernTemplateTwo({
 
                   return (
                     <div
-                      key={`${section.id}-${item.id}`}
-                      className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white"
+                      key={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>o</mi><mi>n</mi><mi mathvariant="normal">.</mi><mi>i</mi><mi>d</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{section.id}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">sec</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mord mathnormal">n</span><span class="mord">.</span><span class="mord mathnormal">i</span><span class="mord mathnormal">d</span></span><span class="mord">−</span></span></span></span>{item.id}`}
+                      className="rounded-full px-4 py-2 text-sm"
+                      style={{
+                        backgroundColor: theme.primary,
+                        color: theme.onPrimary,
+                      }}
                     >
                       {skill.name}
                       {hasText(skill.level) ? ` • ${skill.level}` : ""}
@@ -923,10 +998,13 @@ export default function ModernTemplateTwo({
         return (
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <h2
+                className="text-xs font-semibold uppercase tracking-[0.25em]"
+                style={{ color: theme.accentText }}
+              >
                 {section.title || "Certifications"}
               </h2>
-              <div className="h-px flex-1 bg-slate-200" />
+              <div className="h-px flex-1" style={{ backgroundColor: theme.softBorder }} />
             </div>
 
             <div className="mt-6">
@@ -937,7 +1015,13 @@ export default function ModernTemplateTwo({
                   const certification = readCertificationItem(item.content);
 
                   return (
-                    <div className="rounded-2xl bg-slate-50 px-5 py-5">
+                    <div
+                      className="rounded-2xl px-5 py-5"
+                      style={{
+                        backgroundColor: theme.softBackground,
+                        border: `1px solid ${theme.softBorder}`,
+                      }}
+                    >
                       <h3 className="text-lg font-semibold text-slate-900">
                         {certification.name || "Certification"}
                       </h3>
@@ -992,8 +1076,8 @@ export default function ModernTemplateTwo({
     const dragStateClass = isDraggedSection ? "opacity-60" : "";
     const shellBaseClass =
       zone === "main"
-        ? "rounded-[28px] border border-slate-200 bg-white px-6 py-6 shadow-sm"
-        : "rounded-[28px] border border-slate-200 bg-slate-50/80 px-5 py-5";
+        ? "rounded-[28px] border bg-white px-6 py-6 shadow-sm"
+        : "rounded-[28px] border px-5 py-5";
 
     return (
       <div
@@ -1021,7 +1105,15 @@ export default function ModernTemplateTwo({
               }
             : undefined
         }
-        className={`${shellBaseClass} ${interactiveClasses} ${dropClasses} ${dragStateClass}`}
+        className={`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mi>h</mi><mi>e</mi><mi>l</mi><mi>l</mi><mi>B</mi><mi>a</mi><mi>s</mi><mi>e</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{shellBaseClass}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">h</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mord mathnormal">a</span><span class="mord mathnormal">se</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">ss</span></span></span></span></span>{interactiveClasses} <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>r</mi><mi>o</mi><mi>p</mi><mi>C</mi><mi>l</mi><mi>a</mi><mi>s</mi><mi>s</mi><mi>e</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">{dropClasses}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.07153em;">pC</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">a</span><span class="mord mathnormal">sses</span></span></span></span></span>{dragStateClass}`}
+        style={
+          zone === "main"
+            ? { borderColor: theme.softBorder }
+            : {
+                borderColor: theme.softBorder,
+                backgroundColor: theme.softBackgroundStrong,
+              }
+        }
       >
         {editable && (
           <div className="mb-3 flex items-center gap-2">
@@ -1050,10 +1142,17 @@ export default function ModernTemplateTwo({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[850px] rounded-[32px] bg-white shadow-sm ring-1 ring-slate-200 print:max-w-none print:rounded-none print:bg-transparent print:shadow-none print:ring-0">
+    <div
+      className="mx-auto w-full max-w-[850px] rounded-[32px] bg-white shadow-sm ring-1 ring-slate-200 print:max-w-none print:rounded-none print:bg-transparent print:shadow-none print:ring-0"
+      style={{ fontFamily: font.cssStack }}
+    >
       <div className="grid min-h-[1100px] grid-cols-1 md:grid-cols-[1fr_260px] print:grid-cols-[1fr_260px]">
         <section
-          className={`order-2 border-t border-slate-200 bg-slate-50 px-6 py-8 md:order-2 md:border-l md:border-t-0 print:border-l ${editable ? "min-h-[1100px]" : ""}`}
+          className={`order-2 border-t px-6 py-8 md:order-2 md:border-l md:border-t-0 print:border-l ${editable ? "min-h-[1100px]" : ""}`}
+          style={{
+            borderColor: theme.softBorder,
+            backgroundColor: theme.softBackground,
+          }}
           onDragOver={
             editable && !draggedItem
               ? (event: DragEvent<HTMLDivElement>) => {
