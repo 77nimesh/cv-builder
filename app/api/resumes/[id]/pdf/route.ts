@@ -6,10 +6,12 @@ type RouteContext = {
 };
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 async function waitForPrintReady(page: Page) {
   await page.waitForLoadState("domcontentloaded");
   await page.waitForLoadState("networkidle");
+  await page.waitForSelector("[data-resume-template]");
 
   await page.evaluate(async () => {
     const fontSet = (document as Document & {
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   try {
     const origin = req.nextUrl.origin;
-    const printUrl = `${origin}/resumes/${id}/print`;
+    const printUrl = `${origin}/resumes/${id}/print?view=pdf&ts=${Date.now()}`;
 
     browser = await chromium.launch({
       headless: true,
@@ -73,6 +75,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="resume-${id}.pdf"`,
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
       },
     });
   } catch (error) {
@@ -82,6 +85,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       status: 500,
       headers: {
         "Content-Type": "application/json",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
       },
     });
   } finally {

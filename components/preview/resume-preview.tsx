@@ -1,12 +1,12 @@
 "use client";
 
 import type { ResumeRecord, ResumeZone } from "@/lib/types";
-import ModernTemplateOne from "@/components/templates/modern-template-one";
-
-type DraggedItemState = {
-  sectionId: string;
-  itemId: string;
-};
+import { getActiveResumeTemplateId } from "@/components/templates/template-registry";
+import { resolveResumeTemplateComponent } from "@/components/templates/template-renderer";
+import type {
+  DraggedItemState,
+  ResumeTemplateProps,
+} from "@/components/templates/types";
 
 type ResumePreviewProps = {
   resume: ResumeRecord;
@@ -45,9 +45,10 @@ export default function ResumePreview({
   onItemListDrop,
   onItemDragEnd,
 }: ResumePreviewProps) {
-  const activeTemplate = resume.data.layout.template || resume.template;
+  const activeTemplateId = getActiveResumeTemplateId(resume);
+  const TemplateComponent = resolveResumeTemplateComponent(activeTemplateId);
 
-  const templateProps = {
+  const templateProps: ResumeTemplateProps = {
     data: resume.data,
     photoPath: resume.photoPath,
     editable,
@@ -69,16 +70,7 @@ export default function ResumePreview({
 
   return (
     <div className="print:m-0 print:p-0">
-      {(() => {
-        switch (activeTemplate) {
-          case "modern-1":
-            return <ModernTemplateOne {...templateProps} />;
-          case "modern-2":
-            return <ModernTemplateOne {...templateProps} />;
-          default:
-            return <ModernTemplateOne {...templateProps} />;
-        }
-      })()}
+      <TemplateComponent {...templateProps} />
     </div>
   );
 }

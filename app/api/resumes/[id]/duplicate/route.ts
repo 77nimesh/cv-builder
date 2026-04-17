@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeResumeRecord } from "@/lib/resume/record";
+import type { ResumeData, ResumeRecord } from "@/lib/types";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -22,6 +23,28 @@ function buildDuplicateTitle(title: string, existingTitles: string[]) {
   return `${title} (Copy ${copyNumber})`;
 }
 
+function cloneResumeData(data: ResumeData): ResumeData {
+  return JSON.parse(JSON.stringify(data)) as ResumeData;
+}
+
+function readActiveTemplate(resume: ResumeRecord) {
+  const layoutTemplate = resume.data.layout.template?.trim();
+
+  if (layoutTemplate) {
+    return layoutTemplate;
+  }
+
+  return resume.template;
+}
+
+function readSyncedThemeColor(resume: ResumeRecord) {
+  return resume.themeColor ?? resume.data.layout.themeColor ?? null;
+}
+
+function readSyncedFontFamily(resume: ResumeRecord) {
+  return resume.fontFamily ?? resume.data.layout.fontFamily ?? null;
+}
+
 export async function POST(_: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -35,9 +58,22 @@ export async function POST(_: Request, context: RouteContext) {
     }
 
     const sourceResume = normalizeResumeRecord(sourceResumeRaw);
-
     const existingResumes = await prisma.resume.findMany({
       select: { title: true },
+    });
+
+    const template = readActiveTemplate(sourceResume);
+    const themeColor = readSyncedThemeColor(sourceResume);
+    const fontFamily = readSyncedFontFamily(sourceResume);
+
+    const duplicatedData = cloneResumeData({
+      ...sourceResume.data,
+      layout: {
+        ...sourceResume.data.layout,
+        template,
+        themeColor,
+        fontFamily,
+      },
     });
 
     const duplicatedResume = await prisma.resume.create({
@@ -46,11 +82,11 @@ export async function POST(_: Request, context: RouteContext) {
           sourceResume.title,
           existingResumes.map((resume) => resume.title)
         ),
-        template: sourceResume.data.layout.template,
-        themeColor: sourceResume.data.layout.themeColor,
-        fontFamily: sourceResume.data.layout.fontFamily,
+        template,
+        themeColor,
+        fontFamily,
         photoPath: sourceResume.photoPath,
-        data: sourceResume.data,
+        data: duplicatedData,
       },
     });
 

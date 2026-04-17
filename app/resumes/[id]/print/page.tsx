@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import ResumePreview from "@/components/preview/resume-preview";
+import { getResumeTemplateDefinitionForRecord } from "@/components/templates/template-registry";
+import { prisma } from "@/lib/prisma";
 import { normalizeResumeRecord } from "@/lib/resume/record";
 
 type PrintResumePageProps = {
   params: Promise<{ id: string }>;
 };
+
+export const dynamic = "force-dynamic";
 
 export default async function PrintResumePage({
   params,
@@ -21,6 +24,8 @@ export default async function PrintResumePage({
   }
 
   const normalizedResume = normalizeResumeRecord(resume);
+  const templateDefinition =
+    getResumeTemplateDefinitionForRecord(normalizedResume);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -53,11 +58,19 @@ export default async function PrintResumePage({
         }
       `}</style>
 
-      <div className="relative mx-auto w-[794px] bg-white print:w-full">
-        <div
-          aria-hidden
-          className="pointer-events-none fixed inset-y-0 left-0 hidden w-[280px] bg-slate-900 print:block"
-        />
+      <div
+        data-resume-template={templateDefinition.id}
+        className={
+          templateDefinition.printWrapperClassName ??
+          "relative mx-auto w-[794px] bg-white print:w-full"
+        }
+      >
+        {templateDefinition.printBackgroundClassName ? (
+          <div
+            aria-hidden
+            className={templateDefinition.printBackgroundClassName}
+          />
+        ) : null}
 
         <div className="relative z-10">
           <ResumePreview resume={normalizedResume} />

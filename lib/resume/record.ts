@@ -72,14 +72,21 @@ function getBasePhotoShape(resume: ResumeRecord): ResumePhotoShape {
 }
 
 export function normalizeResumeRecord(record: ResumeRecordSource): ResumeRecord {
+  const normalizedData = normalizeResumeData(record.data, {
+    template: record.template,
+    themeColor: record.themeColor,
+    fontFamily: record.fontFamily,
+    photoShape: getPhotoShapeFromData(record.data),
+  });
+
   return {
     ...record,
-    data: normalizeResumeData(record.data, {
-      template: record.template,
-      themeColor: record.themeColor,
-      fontFamily: record.fontFamily,
-      photoShape: getPhotoShapeFromData(record.data),
-    }),
+    title: normalizeRequiredString(record.title, "Untitled Resume"),
+    template: normalizedData.layout.template,
+    themeColor: normalizedData.layout.themeColor,
+    fontFamily: normalizedData.layout.fontFamily,
+    photoPath: normalizeNullableString(record.photoPath, null),
+    data: normalizedData,
   };
 }
 
@@ -120,11 +127,11 @@ export function buildResumeUpdatePayload(
 
   return {
     title,
-    template,
-    themeColor,
-    fontFamily,
+    template: normalizedData.layout.template,
+    themeColor: normalizedData.layout.themeColor,
+    fontFamily: normalizedData.layout.fontFamily,
     photoPath,
-    photoShape,
+    photoShape: normalizedData.layout.photoShape,
     data: normalizedData,
   };
 }

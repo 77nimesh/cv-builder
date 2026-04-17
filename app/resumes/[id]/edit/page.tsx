@@ -23,6 +23,9 @@ export default async function EditResumePage({
   }
 
   const normalizedResume = normalizeResumeRecord(resume);
+  const formRenderKey = `${normalizedResume.id}-${new Date(
+    normalizedResume.updatedAt
+  ).toISOString()}`;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -50,7 +53,7 @@ export default async function EditResumePage({
           </div>
         </div>
 
-        <ResumeForm resume={normalizedResume} />
+        <ResumeForm key={formRenderKey} resume={normalizedResume} />
       </div>
     </main>
   );
