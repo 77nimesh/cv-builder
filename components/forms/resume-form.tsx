@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   type Control,
@@ -245,6 +245,25 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
     name: "data.customSections",
   });
 
+  // ── Auto-save: debounce 1.5s after any field change ──────────────────────
+  const isFirstRender = useRef(true);
+  const watchedValues = watch();
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!isDirty) return;
+
+    const timeout = setTimeout(() => {
+      handleSubmit(onSubmit)();
+    }, 1500);
+
+    return () => clearTimeout(timeout);
+  }, [JSON.stringify(watchedValues)]);
+  // ─────────────────────────────────────────────────────────────────────────
+
   async function onSubmit(values: ResumeFormValues) {
     try {
       setIsSaving(true);
@@ -273,7 +292,8 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <div className="flex justify-center">
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-8">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">Resume Settings</h2>
 
@@ -888,24 +908,37 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
       </div>
 
       {isDirty ? (
-        <button
-          type="submit"
-          disabled={isSaving}
-          aria-label="Save"
-          title="Save"
-          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-white shadow-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60 print:hidden"
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="h-5 w-5"
-          >
-            <path d="M3 4a2 2 0 0 1 2-2h7.586a2 2 0 0 1 1.414.586l2.414 2.414A2 2 0 0 1 17 6.414V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4Zm2 0v12h10V7h-3a1 1 0 0 1-1-1V4H5Zm8 0.414V6h1.586L13 4.414ZM7 10a1 1 0 0 1 1-1h4a1 1 0 1 1 0 2H8a1 1 0 0 1-1-1Z" />
-          </svg>
-          <span>{isSaving ? "Saving..." : "Save"}</span>
-        </button>
+        null
       ) : null}
     </form>
+
+      {/* ── Sticky save button pinned to the right of the form ── */}
+      <div className="relative w-0">
+        <div className="fixed bottom-6 ml-4 pt-6">
+          <button
+            type="button"
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSaving}
+            aria-label="Save"
+            title="Save"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-white shadow-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60 print:hidden"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-5 w-5"
+            >
+              <path d="M3 4a2 2 0 0 1 2-2h7.586a2 2 0 0 1 1.414.586l2.414 2.414A2 2 0 0 1 17 6.414V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4Zm2 0v12h10V7h-3a1 1 0 0 1-1-1V4H5Zm8 0.414V6h1.586L13 4.414ZM7 10a1 1 0 0 1 1-1h4a1 1 0 1 1 0 2H8a1 1 0 0 1-1-1Z" />
+            </svg>
+            <span>{isSaving ? "Saving..." : "Save"}</span>
+          </button>
+          {message && (
+            <p className="mt-2 w-max text-xs text-slate-500">{message}</p>
+          )}
+        </div>
+      </div>
+
+    </div>
   );
 }
