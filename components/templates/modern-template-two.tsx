@@ -30,7 +30,7 @@ function formatDateRange(startDate: string, endDate: string) {
   const end = endDate.trim();
 
   if (start && end) {
-    return start + " - " + end;
+    return `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>t</mi><mi>a</mi><mi>r</mi><mi>t</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{start} -</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6984em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">t</span></span><span class="mord">−</span></span></span></span>{end}`;
   }
 
   if (start) {
@@ -43,6 +43,7 @@ function formatDateRange(startDate: string, endDate: string) {
 
   return "";
 }
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
