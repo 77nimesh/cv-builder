@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ResumePreview from "@/components/preview/resume-preview";
+import {
+  FontFamilyDropdown,
+  ThemeColorDropdown,
+} from "@/components/forms/design-dropdowns";
+import {
+  RESUME_TEMPLATE_IDS,
+  getResumeTemplateDefinition,
+} from "@/components/templates/template-registry";
 import type {
   ResumeRecord,
   ResumeSection,
@@ -182,18 +190,10 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function saveSections(nextSections: ResumeSection[]) {
+  async function saveResume(nextResume: ResumeRecord, savingMessage: string) {
     const previousResume = draftResume;
 
-    const nextData = {
-      ...draftResume.data,
-      sections: nextSections,
-    };
-
-    const optimisticResume = normalizeResumeRecord({
-      ...draftResume,
-      data: nextData,
-    });
+    const optimisticResume = normalizeResumeRecord(nextResume);
     const savePayload = buildResumeUpdatePayload(
       optimisticResume,
       optimisticResume.data,
@@ -209,10 +209,10 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
 
     setDraftResume(optimisticResume);
     setIsSaving(true);
-    setMessage("Saving layout...");
+    setMessage(savingMessage);
 
     try {
-      const response = await fetch(`/api/resumes/${draftResume.id}`, {
+      const response = await fetch(`/api/resumes/${optimisticResume.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -221,7 +221,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save layout");
+        throw new Error("Failed to save resume");
       }
 
       const savedResume = normalizeResumeRecord(
@@ -229,15 +229,30 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
       );
 
       setDraftResume(savedResume);
-      setMessage("Layout saved.");
+      setMessage("Changes saved.");
       router.refresh();
     } catch (error) {
       console.error(error);
       setDraftResume(previousResume);
-      setMessage("Failed to save layout.");
+      setMessage("Failed to save changes.");
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function saveSections(nextSections: ResumeSection[]) {
+    const nextData = {
+      ...draftResume.data,
+      sections: nextSections,
+    };
+
+    await saveResume(
+      {
+        ...draftResume,
+        data: nextData,
+      },
+      "Saving layout..."
+    );
   }
 
   async function handleSectionDrop(targetSectionId: string) {
@@ -328,6 +343,63 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
     await saveSections(nextSections);
   }
 
+  async function handleTemplateChange(nextTemplate: string) {
+    if (nextTemplate === draftResume.template) {
+      return;
+    }
+
+    setDraggedSectionId(null);
+    setDropTargetSectionId(null);
+    setDraggedItem(null);
+    setDropTargetItem(null);
+
+    await saveResume(
+      {
+        ...draftResume,
+        template: nextTemplate,
+      },
+      "Saving design..."
+    );
+  }
+
+  async function handleThemeChange(nextThemeColor: string) {
+    if (nextThemeColor === (draftResume.themeColor ?? "")) {
+      return;
+    }
+
+    setDraggedSectionId(null);
+    setDropTargetSectionId(null);
+    setDraggedItem(null);
+    setDropTargetItem(null);
+
+    await saveResume(
+      {
+        ...draftResume,
+        themeColor: nextThemeColor,
+      },
+      "Saving design..."
+    );
+  }
+
+  async function handleFontChange(nextFontFamily: string) {
+    if (nextFontFamily === (draftResume.fontFamily ?? "")) {
+      return;
+    }
+
+    setDraggedSectionId(null);
+    setDropTargetSectionId(null);
+    setDraggedItem(null);
+    setDropTargetItem(null);
+
+    await saveResume(
+      {
+        ...draftResume,
+        fontFamily: nextFontFamily,
+      },
+      "Saving design..."
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -337,58 +409,165 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
           Sections.
         </p>
         <p className="mt-1">
-          {isSaving
-            ? "Saving layout..."
-            : message || "Layout changes save automatically."}
+          {isSaving ? message || "Saving..." : message || "Changes save automatically."}
         </p>
       </div>
 
-      <ResumePreview
-        resume={draftResume}
-        editable
-        draggedSectionId={draggedSectionId}
-        dropTargetSectionId={dropTargetSectionId}
-        draggedItem={draggedItem}
-        dropTargetItem={dropTargetItem}
-        onSectionDragStart={(sectionId) => {
-          setDraggedSectionId(sectionId);
-          setDropTargetSectionId(null);
-          setDraggedItem(null);
-          setDropTargetItem(null);
-        }}
-        onSectionDragEnter={(sectionId) => {
-          if (draggedSectionId && draggedSectionId !== sectionId) {
-            setDropTargetSectionId(sectionId);
-          }
-        }}
-        onSectionDrop={handleSectionDrop}
-        onZoneDrop={handleZoneDrop}
-        onSectionDragEnd={() => {
-          setDraggedSectionId(null);
-          setDropTargetSectionId(null);
-        }}
-        onItemDragStart={(sectionId, itemId) => {
-          setDraggedItem({ sectionId, itemId });
-          setDropTargetItem(null);
-          setDraggedSectionId(null);
-          setDropTargetSectionId(null);
-        }}
-        onItemDragEnter={(sectionId, itemId) => {
-          if (
-            draggedItem &&
-            draggedItem.sectionId === sectionId &&
-            draggedItem.itemId !== itemId
-          ) {
-            setDropTargetItem({ sectionId, itemId });
-          }
-        }}
-        onItemDrop={handleItemDrop}
-        onItemListDrop={handleItemListDrop}
-        onItemDragEnd={() => {
-          setDraggedItem(null);
-          setDropTargetItem(null);
-        }}
-      />
+      <div className="relative lg:flex lg:items-start lg:gap-6">
+        <div className="mb-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm lg:hidden">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-900">
+                Template
+              </label>
+              <select
+                value={draftResume.template}
+                onChange={(event) => void handleTemplateChange(event.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none"
+              >
+                {RESUME_TEMPLATE_IDS.map((templateId) => {
+                  const templateDefinition = getResumeTemplateDefinition(templateId);
+                  return (
+                    <option key={templateId} value={templateId}>
+                      {templateDefinition.label}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-900">
+                Theme
+              </label>
+              <ThemeColorDropdown
+                value={draftResume.themeColor ?? ""}
+                onChange={(nextThemeId) => void handleThemeChange(nextThemeId)}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-900">
+                Font
+              </label>
+              <FontFamilyDropdown
+                value={draftResume.fontFamily ?? ""}
+                onChange={(nextFontId) => void handleFontChange(nextFontId)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:min-w-0 lg:flex-1">
+          <div className="w-full lg:flex lg:justify-start">
+            <div className="flex justify-center lg:justify-start">
+            <div className="w-full max-w-[794px] print:max-w-[794px]">
+              <ResumePreview
+                resume={draftResume}
+                editable
+                draggedSectionId={draggedSectionId}
+                dropTargetSectionId={dropTargetSectionId}
+                draggedItem={draggedItem}
+                dropTargetItem={dropTargetItem}
+                onSectionDragStart={(sectionId) => {
+                  setDraggedSectionId(sectionId);
+                  setDropTargetSectionId(null);
+                  setDraggedItem(null);
+                  setDropTargetItem(null);
+                }}
+                onSectionDragEnter={(sectionId) => {
+                  if (draggedSectionId && draggedSectionId !== sectionId) {
+                    setDropTargetSectionId(sectionId);
+                  }
+                }}
+                onSectionDrop={handleSectionDrop}
+                onZoneDrop={handleZoneDrop}
+                onSectionDragEnd={() => {
+                  setDraggedSectionId(null);
+                  setDropTargetSectionId(null);
+                }}
+                onItemDragStart={(sectionId, itemId) => {
+                  setDraggedItem({ sectionId, itemId });
+                  setDropTargetItem(null);
+                  setDraggedSectionId(null);
+                  setDropTargetSectionId(null);
+                }}
+                onItemDragEnter={(sectionId, itemId) => {
+                  if (
+                    draggedItem &&
+                    draggedItem.sectionId === sectionId &&
+                    draggedItem.itemId !== itemId
+                  ) {
+                    setDropTargetItem({ sectionId, itemId });
+                  }
+                }}
+                onItemDrop={handleItemDrop}
+                onItemListDrop={handleItemListDrop}
+                onItemDragEnd={() => {
+                  setDraggedItem(null);
+                  setDropTargetItem(null);
+                }}
+              />
+            </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden lg:block w-80 shrink-0 print:hidden">
+          <div className="fixed right-45 top-60 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+            <h2 className="text-base font-semibold text-slate-900">Design</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Template, theme, and font apply instantly.
+            </p>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-900">
+                  Template
+                </label>
+                <select
+                  value={draftResume.template}
+                  onChange={(event) => void handleTemplateChange(event.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+                >
+                  {RESUME_TEMPLATE_IDS.map((templateId) => {
+                    const templateDefinition = getResumeTemplateDefinition(templateId);
+                    return (
+                      <option key={templateId} value={templateId}>
+                        {templateDefinition.label}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-900">
+                  Theme Color
+                </label>
+                <ThemeColorDropdown
+                  value={draftResume.themeColor ?? ""}
+                  onChange={(nextThemeId) => void handleThemeChange(nextThemeId)}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-900">
+                  Font Family
+                </label>
+                <FontFamilyDropdown
+                  value={draftResume.fontFamily ?? ""}
+                  onChange={(nextFontId) => void handleFontChange(nextFontId)}
+                />
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs text-slate-500">
+              {isSaving ? message || "Saving..." : message || "Changes save automatically."}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

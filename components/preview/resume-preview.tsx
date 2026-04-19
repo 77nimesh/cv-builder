@@ -2,7 +2,8 @@
 
 import type { ResumeRecord, ResumeZone } from "@/lib/types";
 import { getActiveResumeTemplateId } from "@/components/templates/template-registry";
-import { resolveResumeTemplateComponent } from "@/components/templates/template-renderer";
+import ModernTemplateOne from "@/components/templates/modern-template-one";
+import ModernTemplateTwo from "@/components/templates/modern-template-two";
 import type {
   DraggedItemState,
   ResumeTemplateProps,
@@ -46,7 +47,6 @@ export default function ResumePreview({
   onItemDragEnd,
 }: ResumePreviewProps) {
   const activeTemplateId = getActiveResumeTemplateId(resume);
-  const TemplateComponent = resolveResumeTemplateComponent(activeTemplateId);
 
   const templateProps: ResumeTemplateProps = {
     data: resume.data,
@@ -70,7 +70,11 @@ export default function ResumePreview({
 
   return (
     <div className="print:m-0 print:p-0">
-      <TemplateComponent {...templateProps} />
+      {activeTemplateId === "modern-2" ? (
+        <ModernTemplateTwo {...templateProps} />
+      ) : (
+        <ModernTemplateOne {...templateProps} />
+      )}
     </div>
   );
 }
