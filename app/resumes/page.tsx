@@ -45,6 +45,13 @@ export default async function ResumesPage() {
               Home
             </Link>
 
+            <Link
+              href="/account"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+            >
+              Account
+            </Link>
+
             <LogoutButton className="rounded-xl border border-slate-300 bg-white px-4 py-3" />
 
             <Link
@@ -55,6 +62,23 @@ export default async function ResumesPage() {
             </Link>
           </div>
         </div>
+
+        {!user.isEmailVerified ? (
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+            <p className="font-medium">Your email address is not verified yet.</p>
+            <p className="mt-1 text-sm">
+              You can resend the verification email from your{" "}
+              <Link href="/account" className="underline">
+                account page
+              </Link>
+              . In local development, previews appear under{" "}
+              <Link href="/dev/emails" className="underline">
+                /dev/emails
+              </Link>
+              .
+            </p>
+          </div>
+        ) : null}
 
         <div className="mt-10 grid gap-4">
           {resumes.length === 0 ? (

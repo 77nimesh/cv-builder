@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import SignupForm from "@/components/auth/signup-form";
+import ForgotPasswordForm from "@/components/auth/forgot-password-form";
 import { getCurrentUser } from "@/lib/auth/session";
 
-export default async function SignupPage() {
+export default async function ForgotPasswordPage() {
   const user = await getCurrentUser();
 
   if (user) {
-    redirect("/resumes");
+    redirect("/account");
   }
 
   return (
@@ -15,27 +15,25 @@ export default async function SignupPage() {
       <div className="mx-auto flex min-h-screen max-w-md items-center px-6 py-16">
         <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="mb-8">
-            <Link href="/" className="text-sm text-slate-500">
-              ← Back to home
+            <Link href="/login" className="text-sm text-slate-500">
+              ← Back to login
             </Link>
             <h1 className="mt-4 text-3xl font-bold tracking-tight">
-              Create Account
+              Forgot Password
             </h1>
             <p className="mt-2 text-slate-600">
-              Start saving and managing resumes under your own account.
-            </p>
-            <p className="mt-2 text-sm text-slate-500">
-              A verification email will be prepared after signup.
+              Enter your email and we will prepare a password reset link.
             </p>
           </div>
 
-          <SignupForm />
+          <ForgotPasswordForm />
 
-          <p className="mt-6 text-sm text-slate-600">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-slate-900">
-              Login
+          <p className="mt-6 text-sm text-slate-500">
+            In local development, prepared emails appear under{" "}
+            <Link href="/dev/emails" className="underline">
+              /dev/emails
             </Link>
+            .
           </p>
         </div>
       </div>

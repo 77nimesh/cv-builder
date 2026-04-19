@@ -1,64 +1,45 @@
 "use client";
 
 import { useActionState } from "react";
-import { signupAction } from "@/lib/auth/actions";
-import { initialAuthActionState } from "@/lib/auth/action-state";
+import { changePasswordAction } from "@/lib/auth/actions";
+import { initialMessageActionState } from "@/lib/auth/action-state";
 
-export default function SignupForm() {
+export default function ChangePasswordForm() {
   const [state, formAction, isPending] = useActionState(
-    signupAction,
-    initialAuthActionState
+    changePasswordAction,
+    initialMessageActionState
   );
 
   return (
     <form action={formAction} className="space-y-5">
       <div>
         <label
-          htmlFor="signup-name"
+          htmlFor="change-password-current"
           className="mb-2 block text-sm font-medium text-slate-700"
         >
-          Full name
+          Current password
         </label>
         <input
-          id="signup-name"
-          name="name"
-          type="text"
-          autoComplete="name"
-          defaultValue={state.fields.name ?? ""}
+          id="change-password-current"
+          name="currentPassword"
+          type="password"
+          autoComplete="current-password"
           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-900"
-          placeholder="Your name"
-        />
-      </div>
-
-      <div>
-        <label
-          htmlFor="signup-email"
-          className="mb-2 block text-sm font-medium text-slate-700"
-        >
-          Email
-        </label>
-        <input
-          id="signup-email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          defaultValue={state.fields.email ?? ""}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-900"
-          placeholder="you@example.com"
+          placeholder="Current password"
           required
         />
       </div>
 
       <div>
         <label
-          htmlFor="signup-password"
+          htmlFor="change-password-new"
           className="mb-2 block text-sm font-medium text-slate-700"
         >
-          Password
+          New password
         </label>
         <input
-          id="signup-password"
-          name="password"
+          id="change-password-new"
+          name="newPassword"
           type="password"
           autoComplete="new-password"
           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-900"
@@ -69,18 +50,18 @@ export default function SignupForm() {
 
       <div>
         <label
-          htmlFor="signup-confirm-password"
+          htmlFor="change-password-confirm"
           className="mb-2 block text-sm font-medium text-slate-700"
         >
-          Confirm password
+          Confirm new password
         </label>
         <input
-          id="signup-confirm-password"
+          id="change-password-confirm"
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-900"
-          placeholder="Re-enter your password"
+          placeholder="Re-enter your new password"
           required
         />
       </div>
@@ -100,9 +81,9 @@ export default function SignupForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-xl bg-slate-900 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-70"
+        className="rounded-xl bg-slate-900 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {isPending ? "Creating account..." : "Create Account"}
+        {isPending ? "Changing password..." : "Change Password"}
       </button>
     </form>
   );

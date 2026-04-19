@@ -68,13 +68,35 @@ const authConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        token.role = typeof user.role === "string" ? user.role : "USER";
-        token.emailVerifiedAt =
-          user.emailVerified instanceof Date
-            ? user.emailVerified.toISOString()
-            : null;
-        token.isEmailVerified = user.emailVerified instanceof Date;
       }
+
+      const userId = typeof token.sub === "string" ? token.sub : null;
+
+      if (!userId) {
+        return token;
+      }
+
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          email: true,
+          name: true,
+          role: true,
+          emailVerified: true,
+        },
+      });
+
+      if (!dbUser) {
+        return token;
+      }
+
+      token.name = dbUser.name ?? token.name;
+      token.email = dbUser.email ?? token.email;
+      token.role = dbUser.role;
+      token.emailVerifiedAt = dbUser.emailVerified
+        ? dbUser.emailVerified.toISOString()
+        : null;
+      token.isEmailVerified = Boolean(dbUser.emailVerified);
 
       return token;
     },
@@ -89,6 +111,14 @@ const authConfig = {
             ? token.emailVerifiedAt
             : null;
         session.user.isEmailVerified = Boolean(token.isEmailVerified);
+
+        if (typeof token.name === "string") {
+          session.user.name = token.name;
+        }
+
+        if (typeof token.email === "string") {
+          session.user.email = token.email;
+        }
       }
 
       return session;

@@ -29,14 +29,24 @@ export default async function HomePage() {
             <p className="mt-4 max-w-2xl text-lg text-slate-600">
               Local-first resume builder with live preview and PDF export.
             </p>
+
+            {user ? (
+              <p className="mt-3 text-sm text-slate-500">
+                Signed in as {displayName}
+                {user.isEmailVerified ? " · Email verified" : " · Email not yet verified"}
+              </p>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-3">
             {user ? (
               <>
-                <span className="text-sm text-slate-600">
-                  Signed in as {displayName}
-                </span>
+                <Link
+                  href="/account"
+                  className="rounded-xl border border-slate-300 px-4 py-2"
+                >
+                  Account
+                </Link>
                 <LogoutButton className="rounded-xl border border-slate-300 px-4 py-2" />
               </>
             ) : (
@@ -91,6 +101,12 @@ export default async function HomePage() {
             </>
           )}
         </div>
+
+        {!user ? (
+          <p className="mt-6 text-sm text-slate-500">
+            Password reset, email verification, and account recovery are now built in.
+          </p>
+        ) : null}
       </div>
     </main>
   );

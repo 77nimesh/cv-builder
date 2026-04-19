@@ -1,50 +1,57 @@
 "use client";
 
 import { useActionState } from "react";
-import { loginAction } from "@/lib/auth/actions";
-import { initialAuthActionState } from "@/lib/auth/action-state";
+import { resetPasswordAction } from "@/lib/auth/actions";
+import { initialMessageActionState } from "@/lib/auth/action-state";
 
-export default function LoginForm() {
+type ResetPasswordFormProps = {
+  token: string;
+};
+
+export default function ResetPasswordForm({
+  token,
+}: ResetPasswordFormProps) {
   const [state, formAction, isPending] = useActionState(
-    loginAction,
-    initialAuthActionState
+    resetPasswordAction,
+    initialMessageActionState
   );
 
   return (
     <form action={formAction} className="space-y-5">
+      <input type="hidden" name="token" value={token} />
+
       <div>
         <label
-          htmlFor="login-email"
+          htmlFor="reset-password-new"
           className="mb-2 block text-sm font-medium text-slate-700"
         >
-          Email
+          New password
         </label>
         <input
-          id="login-email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          defaultValue={state.fields.email ?? ""}
+          id="reset-password-new"
+          name="password"
+          type="password"
+          autoComplete="new-password"
           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-900"
-          placeholder="you@example.com"
+          placeholder="At least 8 characters"
           required
         />
       </div>
 
       <div>
         <label
-          htmlFor="login-password"
+          htmlFor="reset-password-confirm"
           className="mb-2 block text-sm font-medium text-slate-700"
         >
-          Password
+          Confirm new password
         </label>
         <input
-          id="login-password"
-          name="password"
+          id="reset-password-confirm"
+          name="confirmPassword"
           type="password"
-          autoComplete="current-password"
+          autoComplete="new-password"
           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-900"
-          placeholder="Enter your password"
+          placeholder="Re-enter your password"
           required
         />
       </div>
@@ -66,7 +73,7 @@ export default function LoginForm() {
         disabled={isPending}
         className="w-full rounded-xl bg-slate-900 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {isPending ? "Logging in..." : "Login"}
+        {isPending ? "Resetting password..." : "Reset Password"}
       </button>
     </form>
   );

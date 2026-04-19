@@ -1,50 +1,31 @@
 "use client";
 
 import { useActionState } from "react";
-import { loginAction } from "@/lib/auth/actions";
-import { initialAuthActionState } from "@/lib/auth/action-state";
+import { forgotPasswordAction } from "@/lib/auth/actions";
+import { initialMessageActionState } from "@/lib/auth/action-state";
 
-export default function LoginForm() {
+export default function ForgotPasswordForm() {
   const [state, formAction, isPending] = useActionState(
-    loginAction,
-    initialAuthActionState
+    forgotPasswordAction,
+    initialMessageActionState
   );
 
   return (
     <form action={formAction} className="space-y-5">
       <div>
         <label
-          htmlFor="login-email"
+          htmlFor="forgot-password-email"
           className="mb-2 block text-sm font-medium text-slate-700"
         >
           Email
         </label>
         <input
-          id="login-email"
+          id="forgot-password-email"
           name="email"
           type="email"
           autoComplete="email"
-          defaultValue={state.fields.email ?? ""}
           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-900"
           placeholder="you@example.com"
-          required
-        />
-      </div>
-
-      <div>
-        <label
-          htmlFor="login-password"
-          className="mb-2 block text-sm font-medium text-slate-700"
-        >
-          Password
-        </label>
-        <input
-          id="login-password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-900"
-          placeholder="Enter your password"
           required
         />
       </div>
@@ -66,7 +47,7 @@ export default function LoginForm() {
         disabled={isPending}
         className="w-full rounded-xl bg-slate-900 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {isPending ? "Logging in..." : "Login"}
+        {isPending ? "Preparing reset link..." : "Send Reset Link"}
       </button>
     </form>
   );
