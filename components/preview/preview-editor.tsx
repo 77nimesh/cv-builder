@@ -514,7 +514,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
         </div>
 
         <div className="hidden lg:block w-80 shrink-0 print:hidden">
-          <div className="fixed right-45 top-60 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+          <div className="fixed top-60 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
             <h2 className="text-base font-semibold text-slate-900">Design</h2>
             <p className="mt-1 text-xs text-slate-500">
               Template, theme, and font apply instantly.
