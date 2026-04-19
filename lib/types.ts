@@ -99,6 +99,8 @@ export type ResumeSectionType =
   | "skills"
   | "projects"
   | "certifications"
+  | "links"
+  | "contact"
   | "custom";
 
 export type ResumeMeta = {

@@ -41,6 +41,14 @@ function readZone(value: unknown): "main" | "sidebar" {
   return value === "sidebar" ? "sidebar" : "main";
 }
 
+function hasText(value: unknown): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function anyText(values: unknown[]): boolean {
+  return values.some((value) => hasText(value));
+}
+
 export function getOrderedSections(data: ResumeData): ResumeSection[] {
   return [...data.sections].sort((left, right) => left.position - right.position);
 }
@@ -188,6 +196,139 @@ function readCustomSectionEntry(value: unknown): CustomSectionEntry {
   };
 }
 
+function hasRenderablePersonalDetails(section: ResumeSection): boolean {
+  const content = section.items[0]?.content;
+
+  if (!isRecord(content)) {
+    return false;
+  }
+
+  return anyText([
+    content.fullName,
+    content.headline,
+    content.email,
+    content.phone,
+    content.location,
+    content.linkedIn,
+    content.website,
+  ]);
+}
+
+function hasRenderableSummary(section: ResumeSection): boolean {
+  const content = section.items[0]?.content;
+
+  if (typeof content === "string") {
+    return hasText(content);
+  }
+
+  if (isRecord(content)) {
+    return hasText(content.text);
+  }
+
+  return false;
+}
+
+function hasRenderableExperience(section: ResumeSection): boolean {
+  return section.items.some((item) => {
+    const entry = readExperienceItem(item.content);
+    return anyText([
+      entry.company,
+      entry.role,
+      entry.location,
+      entry.startDate,
+      entry.endDate,
+      entry.description,
+    ]);
+  });
+}
+
+function hasRenderableEducation(section: ResumeSection): boolean {
+  return section.items.some((item) => {
+    const entry = readEducationItem(item.content);
+    return anyText([
+      entry.institution,
+      entry.degree,
+      entry.location,
+      entry.startDate,
+      entry.endDate,
+      entry.description,
+    ]);
+  });
+}
+
+function hasRenderableSkills(section: ResumeSection): boolean {
+  return section.items.some((item) => {
+    if (typeof item.content === "string") {
+      return hasText(item.content);
+    }
+
+    const entry = readSkillItem(item.content);
+    return anyText([entry.name, entry.level]);
+  });
+}
+
+function hasRenderableProjects(section: ResumeSection): boolean {
+  return section.items.some((item) => {
+    const entry = readProjectItem(item.content);
+    return anyText([
+      entry.name,
+      entry.role,
+      entry.url,
+      entry.startDate,
+      entry.endDate,
+      entry.description,
+    ]);
+  });
+}
+
+function hasRenderableCertifications(section: ResumeSection): boolean {
+  return section.items.some((item) => {
+    const entry = readCertificationItem(item.content);
+    return anyText([
+      entry.name,
+      entry.issuer,
+      entry.issueDate,
+      entry.credentialId,
+      entry.url,
+    ]);
+  });
+}
+
+function hasRenderableCustomSection(section: ResumeSection): boolean {
+  return section.items.some((item) => {
+    const entry = readCustomSectionEntry(item.content);
+    return anyText([
+      entry.title,
+      entry.subtitle,
+      entry.meta,
+      entry.description,
+    ]);
+  });
+}
+
+export function hasRenderableSectionContent(section: ResumeSection): boolean {
+  switch (section.type) {
+    case "personal-details":
+      return hasRenderablePersonalDetails(section);
+    case "summary":
+      return hasRenderableSummary(section);
+    case "experience":
+      return hasRenderableExperience(section);
+    case "education":
+      return hasRenderableEducation(section);
+    case "skills":
+      return hasRenderableSkills(section);
+    case "projects":
+      return hasRenderableProjects(section);
+    case "certifications":
+      return hasRenderableCertifications(section);
+    case "custom":
+      return hasRenderableCustomSection(section);
+    default:
+      return false;
+  }
+}
+
 export function getExperienceItems(data: ResumeData): ExperienceItem[] {
   return (
     getSection(data, "experience")?.items.map((item) =>
@@ -226,7 +367,6 @@ export function getCertificationItems(data: ResumeData): CertificationItem[] {
     ) ?? defaultResumeFormData.certifications
   );
 }
-
 
 export function getSectionVisibilityFormData(
   data: ResumeData

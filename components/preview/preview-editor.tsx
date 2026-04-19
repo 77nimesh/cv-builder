@@ -460,8 +460,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
 
         <div className="lg:min-w-0 lg:flex-1">
           <div className="w-full lg:flex lg:justify-start">
-            <div className="flex justify-center lg:justify-start">
-            <div className="w-full max-w-[794px] print:max-w-[794px]">
+            <div className="flex w-full justify-center lg:justify-start">
               <ResumePreview
                 resume={draftResume}
                 editable
@@ -509,12 +508,11 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
                 }}
               />
             </div>
-            </div>
           </div>
         </div>
 
-        <div className="hidden lg:block w-80 shrink-0 print:hidden">
-          <div className="fixed top-60 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+        <div className="hidden w-80 shrink-0 print:hidden lg:block">
+          <div className="fixed z-10 w-80 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
             <h2 className="text-base font-semibold text-slate-900">Design</h2>
             <p className="mt-1 text-xs text-slate-500">
               Template, theme, and font apply instantly.
@@ -528,7 +526,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
                 <select
                   value={draftResume.template}
                   onChange={(event) => void handleTemplateChange(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none"
                 >
                   {RESUME_TEMPLATE_IDS.map((templateId) => {
                     const templateDefinition = getResumeTemplateDefinition(templateId);
@@ -543,7 +541,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-900">
-                  Theme Color
+                  Theme
                 </label>
                 <ThemeColorDropdown
                   value={draftResume.themeColor ?? ""}
@@ -553,7 +551,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-900">
-                  Font Family
+                  Font
                 </label>
                 <FontFamilyDropdown
                   value={draftResume.fontFamily ?? ""}
@@ -561,10 +559,6 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
                 />
               </div>
             </div>
-
-            <p className="mt-4 text-xs text-slate-500">
-              {isSaving ? message || "Saving..." : message || "Changes save automatically."}
-            </p>
           </div>
         </div>
       </div>

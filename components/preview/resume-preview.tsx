@@ -1,9 +1,13 @@
 "use client";
 
 import type { ResumeRecord, ResumeZone } from "@/lib/types";
-import { getActiveResumeTemplateId } from "@/components/templates/template-registry";
-import ModernTemplateOne from "@/components/templates/modern-template-one";
-import ModernTemplateTwo from "@/components/templates/modern-template-two";
+import {
+  getActiveResumeTemplateId,
+  getResumeTemplateDefinitionForRecord,
+  getResumeTemplatePrintBackgroundColor,
+} from "@/components/templates/template-registry";
+import { resolveResumeTemplateComponent } from "@/components/templates/template-renderer";
+import { getResumePreviewShellStyle } from "@/components/templates/export-layout";
 import type {
   DraggedItemState,
   ResumeTemplateProps,
@@ -11,6 +15,7 @@ import type {
 
 type ResumePreviewProps = {
   resume: ResumeRecord;
+  mode?: "preview" | "print";
   editable?: boolean;
   draggedSectionId?: string | null;
   dropTargetSectionId?: string | null;
@@ -30,6 +35,7 @@ type ResumePreviewProps = {
 
 export default function ResumePreview({
   resume,
+  mode = "preview",
   editable = false,
   draggedSectionId = null,
   dropTargetSectionId = null,
@@ -47,6 +53,13 @@ export default function ResumePreview({
   onItemDragEnd,
 }: ResumePreviewProps) {
   const activeTemplateId = getActiveResumeTemplateId(resume);
+  const templateDefinition = getResumeTemplateDefinitionForRecord(resume);
+  const TemplateComponent = resolveResumeTemplateComponent(activeTemplateId);
+  const printBackgroundColor = getResumeTemplatePrintBackgroundColor(
+    templateDefinition.id,
+    resume.data.layout.themeColor
+  );
+  const pageShellStyle = getResumePreviewShellStyle(templateDefinition.id);
 
   const templateProps: ResumeTemplateProps = {
     data: resume.data,
@@ -69,12 +82,29 @@ export default function ResumePreview({
   };
 
   return (
-    <div className="print:m-0 print:p-0">
-      {activeTemplateId === "modern-2" ? (
-        <ModernTemplateTwo {...templateProps} />
-      ) : (
-        <ModernTemplateOne {...templateProps} />
-      )}
+    <div
+      data-resume-template={templateDefinition.id}
+      data-resume-mode={mode}
+      className={
+        mode === "print"
+          ? "resume-preview-shell relative mx-auto w-full bg-white print:w-full"
+          : "resume-preview-shell relative mx-auto w-full"
+      }
+      style={pageShellStyle}
+    >
+      {mode === "print" && templateDefinition.printBackgroundSide ? (
+        <div
+          aria-hidden
+          className={`pointer-events-none fixed inset-y-0 hidden print:block ${
+            templateDefinition.printBackgroundSide === "left" ? "left-0" : "right-0"
+          } ${templateDefinition.printBackgroundWidthClassName ?? "w-[280px]"}`}
+          style={{ backgroundColor: printBackgroundColor }}
+        />
+      ) : null}
+
+      <div className="relative z-10 print:m-0 print:p-0">
+        <TemplateComponent {...templateProps} />
+      </div>
     </div>
   );
 }

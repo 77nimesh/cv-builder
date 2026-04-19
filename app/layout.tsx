@@ -1,5 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  EB_Garamond,
+  Geist,
+  Geist_Mono,
+  Inter,
+  Lato,
+  Libre_Baskerville,
+  Merriweather,
+  Nunito_Sans,
+  Source_Sans_3,
+} from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -10,6 +20,54 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const resumeInter = Inter({
+  variable: "--font-resume-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const resumeLato = Lato({
+  variable: "--font-resume-lato",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
+});
+
+const resumeSourceSans = Source_Sans_3({
+  variable: "--font-resume-source-sans",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  display: "swap",
+});
+
+const resumeNunitoSans = Nunito_Sans({
+  variable: "--font-resume-nunito-sans",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  display: "swap",
+});
+
+const resumeMerriweather = Merriweather({
+  variable: "--font-resume-merriweather",
+  subsets: ["latin"],
+  weight: ["300", "400", "700", "900"],
+  display: "swap",
+});
+
+const resumeLibreBaskerville = Libre_Baskerville({
+  variable: "--font-resume-libre-baskerville",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
+});
+
+const resumeEbgGaramond = EB_Garamond({
+  variable: "--font-resume-eb-garamond",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +83,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={[
+        geistSans.variable,
+        geistMono.variable,
+        resumeInter.variable,
+        resumeLato.variable,
+        resumeSourceSans.variable,
+        resumeNunitoSans.variable,
+        resumeMerriweather.variable,
+        resumeLibreBaskerville.variable,
+        resumeEbgGaramond.variable,
+        "h-full antialiased",
+      ].join(" ")}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
