@@ -6,6 +6,7 @@ import {
   buildResumeUpdatePayload,
   normalizeResumeRecord,
 } from "@/lib/resume/record";
+import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 import { resumeFormSchema } from "@/lib/validators";
 
 type RouteContext = {
@@ -166,7 +167,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         themeColor: payload.themeColor,
         fontFamily: payload.fontFamily,
         photoPath: payload.photoPath,
-        data: payload.data,
+        data: toPrismaResumeData(payload.data),
       },
     });
 

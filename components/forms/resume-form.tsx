@@ -466,7 +466,7 @@ function CustomSectionFields({
                   <label className="mb-2 block text-sm font-medium">Title</label>
                   <input
                     {...register(
-                      `data.customSections.<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><mi mathvariant="normal">.</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>r</mi><mi>i</mi><mi>e</mi><mi>s</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">{index}.entries.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span></span><span class="mord">.</span><span class="mord mathnormal">e</span><span class="mord mathnormal">n</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">i</span><span class="mord mathnormal">es</span><span class="mord">.</span></span></span></span>{entryIndex}.title` as const
+                      `data.customSections.${index}.entries.${entryIndex}.title` as const
                     )}
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
                     placeholder="Dean’s List"
@@ -477,7 +477,7 @@ function CustomSectionFields({
                   <label className="mb-2 block text-sm font-medium">Subtitle</label>
                   <input
                     {...register(
-                      `data.customSections.<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><mi mathvariant="normal">.</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>r</mi><mi>i</mi><mi>e</mi><mi>s</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">{index}.entries.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span></span><span class="mord">.</span><span class="mord mathnormal">e</span><span class="mord mathnormal">n</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">i</span><span class="mord mathnormal">es</span><span class="mord">.</span></span></span></span>{entryIndex}.subtitle` as const
+                      `data.customSections.${index}.entries.${entryIndex}.subtitle` as const
                     )}
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
                     placeholder="University of Adelaide"
@@ -488,7 +488,7 @@ function CustomSectionFields({
                   <label className="mb-2 block text-sm font-medium">Meta</label>
                   <input
                     {...register(
-                      `data.customSections.<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><mi mathvariant="normal">.</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>r</mi><mi>i</mi><mi>e</mi><mi>s</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">{index}.entries.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span></span><span class="mord">.</span><span class="mord mathnormal">e</span><span class="mord mathnormal">n</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">i</span><span class="mord mathnormal">es</span><span class="mord">.</span></span></span></span>{entryIndex}.meta` as const
+                      `data.customSections.${index}.entries.${entryIndex}.meta` as const
                     )}
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
                     placeholder="2024 • Adelaide"
@@ -500,7 +500,7 @@ function CustomSectionFields({
                 <label className="mb-2 block text-sm font-medium">Description</label>
                 <textarea
                   {...register(
-                    `data.customSections.<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><mi mathvariant="normal">.</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>r</mi><mi>i</mi><mi>e</mi><mi>s</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">{index}.entries.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span></span><span class="mord">.</span><span class="mord mathnormal">e</span><span class="mord mathnormal">n</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">i</span><span class="mord mathnormal">es</span><span class="mord">.</span></span></span></span>{entryIndex}.description` as const
+                    `data.customSections.${index}.entries.${entryIndex}.description` as const
                   )}
                   rows={4}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"

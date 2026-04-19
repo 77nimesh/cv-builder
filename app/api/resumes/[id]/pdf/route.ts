@@ -46,7 +46,7 @@ async function waitForPrintReady(page: Page) {
 export async function GET(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
 
-  let browser;
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
 
   try {
     const origin = req.nextUrl.origin;
@@ -65,13 +65,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
     await waitForPrintReady(page);
     await page.emulateMedia({ media: "print" });
 
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      preferCSSPageSize: true,
-    });
+    const pdfBytes = Uint8Array.from(
+      await page.pdf({
+        format: "A4",
+        printBackground: true,
+        preferCSSPageSize: true,
+      })
+    );
 
-    return new Response(pdfBuffer, {
+    return new Response(pdfBytes, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="resume-${id}.pdf"`,

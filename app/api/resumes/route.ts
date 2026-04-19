@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createDefaultResumeData } from "@/lib/default-resume";
 import { normalizeResumeRecord } from "@/lib/resume/record";
+import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 
 export async function GET() {
   try {
@@ -9,7 +10,9 @@ export async function GET() {
       orderBy: { updatedAt: "desc" },
     });
 
-    return NextResponse.json(resumes.map((resume) => normalizeResumeRecord(resume)));
+    return NextResponse.json(
+      resumes.map((resume) => normalizeResumeRecord(resume))
+    );
   } catch (error) {
     console.error("Failed to fetch resumes:", error);
     return NextResponse.json(
@@ -30,7 +33,7 @@ export async function POST() {
         themeColor: data.layout.themeColor,
         fontFamily: data.layout.fontFamily,
         photoPath: null,
-        data,
+        data: toPrismaResumeData(data),
       },
     });
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeResumeRecord } from "@/lib/resume/record";
+import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 import type { ResumeData, ResumeRecord } from "@/lib/types";
 
 type RouteContext = {
@@ -86,7 +87,7 @@ export async function POST(_: Request, context: RouteContext) {
         themeColor,
         fontFamily,
         photoPath: sourceResume.photoPath,
-        data: duplicatedData,
+        data: toPrismaResumeData(duplicatedData),
       },
     });
 

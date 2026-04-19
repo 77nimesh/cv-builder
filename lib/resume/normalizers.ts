@@ -1,4 +1,5 @@
 import type {
+  BuiltInSectionVisibility,
   CertificationItem,
   CustomSectionEntry,
   CustomSectionFormSection,
@@ -8,12 +9,12 @@ import type {
   ProjectItem,
   ResumeData,
   ResumeFormData,
+  ResumePhotoShape,
   ResumeSection,
   ResumeSectionItem,
   ResumeSectionType,
   ResumeZone,
   SkillItem,
-  ResumePhotoShape,
 } from "@/lib/types";
 import {
   createDefaultResumeData,
@@ -33,6 +34,8 @@ type ResumeNormalizationOptions = {
   fontFamily?: string | null;
   photoShape?: ResumePhotoShape | null;
 };
+
+const CORRUPTED_ID_PATTERN = /<[^>]+>|[{}]/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -70,33 +73,6 @@ function readPhotoShape(
   return value === "circle" ? "circle" : fallback;
 }
 
-function isBrokenGeneratedId(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return true;
-  }
-
-  return (
-    trimmed.includes("<span class=\"katex\">") ||
-    trimmed.includes("katex-mathml") ||
-    trimmed.includes("{fallbackPrefix}") ||
-    trimmed.includes("{fallbackPosition") ||
-    trimmed.includes("{start}") ||
-    trimmed.includes("{end}") ||
-    trimmed.includes("<math ") ||
-    trimmed.includes("</span>")
-  );
-}
-
-function buildSafeItemId(prefix: string, position: number) {
-  return `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>p</mi><mi>r</mi><mi>e</mi><mi>f</mi><mi>i</mi><mi>x</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{prefix}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">i</span><span class="mord mathnormal">x</span></span><span class="mord">−</span></span></span></span>{position + 1}`;
-}
-
-function buildSafeSectionId(position: number) {
-  return `custom-${position + 1}`;
-}
-
 function readIdString(value: unknown, fallback = ""): string {
   if (typeof value !== "string") {
     return fallback;
@@ -104,6 +80,57 @@ function readIdString(value: unknown, fallback = ""): string {
 
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : fallback;
+}
+
+function isBrokenGeneratedId(value: string): boolean {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return true;
+  }
+
+  return CORRUPTED_ID_PATTERN.test(trimmed);
+}
+
+function sanitizeIdPart(value: string, fallback: string): string {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return normalized.length > 0 ? normalized : fallback;
+}
+
+function sanitizeExistingId(value: string, fallback: string): string {
+  if (isBrokenGeneratedId(value)) {
+    return fallback;
+  }
+
+  return sanitizeIdPart(value, fallback);
+}
+
+function buildSafeItemId(prefix: string, position: number): string {
+  const safePrefix = sanitizeIdPart(prefix, "item");
+  return `${safePrefix}-${position + 1}`;
+}
+
+function buildSafeSectionId(position: number): string {
+  return `custom-${position + 1}`;
+}
+
+function getUniqueId(baseId: string, seenIds: Set<string>): string {
+  let nextId = baseId;
+  let suffix = 2;
+
+  while (seenIds.has(nextId)) {
+    nextId = `${baseId}-${suffix}`;
+    suffix += 1;
+  }
+
+  seenIds.add(nextId);
+  return nextId;
 }
 
 function normalizePersonalDetailsContent(value: unknown): PersonalDetails {
@@ -227,11 +254,9 @@ function buildNormalizedItem(
 ): ResumeSectionItem {
   const itemRecord = isRecord(rawItem) ? rawItem : null;
   const rawId = readIdString(itemRecord?.id);
-  const id = isBrokenGeneratedId(rawId)
-    ? buildSafeItemId(fallbackPrefix, fallbackPosition)
-    : rawId;
-
   const position = readPosition(itemRecord?.position, fallbackPosition);
+  const fallbackId = buildSafeItemId(fallbackPrefix, position);
+  const id = sanitizeExistingId(rawId, fallbackId);
   const rawContent = itemRecord?.content ?? rawItem;
 
   switch (sectionType) {
@@ -315,6 +340,7 @@ function normalizeSectionItems(
       const defaultSection = buildDefaultSectionTemplate(
         sectionType as "personal-details" | "summary"
       );
+
       return defaultSection.items.map((item) => ({ ...item }));
     }
 
@@ -329,22 +355,14 @@ function normalizeSectionItems(
     )
     .sort((left, right) => left.position - right.position)
     .map((item, index) => {
-      let nextId = item.id;
-
-      if (isBrokenGeneratedId(nextId) || seenIds.has(nextId)) {
-        nextId = buildSafeItemId(fallbackPrefix, index);
-      }
-
-      while (seenIds.has(nextId)) {
-        nextId = `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>b</mi><mi>u</mi><mi>i</mi><mi>l</mi><mi>d</mi><mi>S</mi><mi>a</mi><mi>f</mi><mi>e</mi><mi>I</mi><mi>t</mi><mi>e</mi><mi>m</mi><mi>I</mi><mi>d</mi><mo stretchy="false">(</mo><mi>f</mi><mi>a</mi><mi>l</mi><mi>l</mi><mi>b</mi><mi>a</mi><mi>c</mi><mi>k</mi><mi>P</mi><mi>r</mi><mi>e</mi><mi>f</mi><mi>i</mi><mi>x</mi><mo separator="true">,</mo><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi><mo stretchy="false">)</mo></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{buildSafeItemId(fallbackPrefix, index)}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="mord mathnormal">u</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.07847em;">I</span><span class="mord mathnormal">t</span><span class="mord mathnormal">e</span><span class="mord mathnormal">m</span><span class="mord mathnormal" style="margin-right:0.07847em;">I</span><span class="mord mathnormal">d</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">ba</span><span class="mord mathnormal">c</span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">i</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">in</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span><span class="mord">−</span></span></span></span>{seenIds.size + 1}`;
-      }
-
-      seenIds.add(nextId);
+      const fallbackId = buildSafeItemId(fallbackPrefix, index);
+      const baseId = sanitizeExistingId(item.id, fallbackId);
+      const id = getUniqueId(baseId, seenIds);
 
       return {
         ...item,
         position: index,
-        id: nextId,
+        id,
       };
     });
 }
@@ -376,10 +394,9 @@ function normalizeCustomSection(
   fallbackPosition: number
 ): ResumeSection {
   const sectionRecord = isRecord(rawSection) ? rawSection : {};
+  const fallbackId = buildSafeSectionId(fallbackPosition);
   const rawId = readIdString(sectionRecord.id);
-  const id = isBrokenGeneratedId(rawId)
-    ? buildSafeSectionId(fallbackPosition)
-    : readIdString(sectionRecord.id, buildSafeSectionId(fallbackPosition));
+  const id = sanitizeExistingId(rawId, fallbackId);
 
   return {
     id,
@@ -396,36 +413,17 @@ function buildUniqueSectionId(
   section: ResumeSection,
   fallbackPosition: number,
   seenIds: Set<string>
-) {
-  const baseId =
+): string {
+  const fallbackId =
     section.type === "custom"
-      ? isBrokenGeneratedId(section.id)
-        ? buildSafeSectionId(fallbackPosition)
-        : readIdString(section.id, buildSafeSectionId(fallbackPosition))
-      : section.id;
+      ? buildSafeSectionId(fallbackPosition)
+      : sanitizeIdPart(section.type, "section");
 
-  let nextId = baseId;
-
-  if (!nextId || seenIds.has(nextId)) {
-    const safeBase =
-      section.type === "custom"
-        ? buildSafeSectionId(fallbackPosition)
-        : `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>o</mi><mi>n</mi><mi mathvariant="normal">.</mi><mi>i</mi><mi>d</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{section.id}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">sec</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mord mathnormal">n</span><span class="mord">.</span><span class="mord mathnormal">i</span><span class="mord mathnormal">d</span></span><span class="mord">−</span></span></span></span>{fallbackPosition + 1}`;
-
-    nextId = safeBase;
-
-    let suffix = 2;
-    while (seenIds.has(nextId)) {
-      nextId = `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>a</mi><mi>f</mi><mi>e</mi><mi>B</mi><mi>a</mi><mi>s</mi><mi>e</mi></mrow><mo>−</mo></mrow><annotation encoding="application/x-tex">{safeBase}-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mord mathnormal">a</span><span class="mord mathnormal">se</span></span><span class="mord">−</span></span></span></span>{suffix}`;
-      suffix += 1;
-    }
-  }
-
-  seenIds.add(nextId);
-  return nextId;
+  const baseId = sanitizeExistingId(section.id, fallbackId);
+  return getUniqueId(baseId, seenIds);
 }
 
-function normalizeSectionIds(sections: ResumeSection[]) {
+function normalizeSectionIds(sections: ResumeSection[]): ResumeSection[] {
   const seenIds = new Set<string>();
 
   return sections.map((section, index) => ({
@@ -509,8 +507,9 @@ function getCustomSectionId(
   section: CustomSectionFormSection,
   startPosition: number,
   index: number
-) {
-  return section.id || `custom-${startPosition + index + 1}`;
+): string {
+  const fallbackId = buildSafeSectionId(startPosition + index);
+  return sanitizeExistingId(section.id, fallbackId);
 }
 
 function buildCustomSectionsFromFormData(
@@ -527,11 +526,7 @@ function buildCustomSectionsFromFormData(
       zone: readZone(section.zone, "main"),
       position: startPosition + index,
       visible: readBoolean(section.visible, true),
-      items: normalizeSectionItems(
-        "custom",
-        section.entries,
-        `${sectionId}-entry`
-      ),
+      items: normalizeSectionItems("custom", section.entries, `${sectionId}-entry`),
     };
   });
 }
@@ -586,7 +581,11 @@ export function buildResumeDataFromFormData(
             formData.sectionVisibility?.experience,
             defaultBuiltInSectionVisibility.experience
           ),
-          items: normalizeSectionItems("experience", formData.experience, "experience"),
+          items: normalizeSectionItems(
+            "experience",
+            formData.experience,
+            "experience"
+          ),
         };
       case "education":
         return {
@@ -648,6 +647,41 @@ export function buildResumeDataFromFormData(
   );
 }
 
+function normalizeSectionVisibility(value: unknown): BuiltInSectionVisibility {
+  const visibility = isRecord(value) ? value : {};
+
+  return {
+    personalDetails: readBoolean(
+      visibility.personalDetails,
+      defaultBuiltInSectionVisibility.personalDetails
+    ),
+    summary: readBoolean(
+      visibility.summary,
+      defaultBuiltInSectionVisibility.summary
+    ),
+    experience: readBoolean(
+      visibility.experience,
+      defaultBuiltInSectionVisibility.experience
+    ),
+    education: readBoolean(
+      visibility.education,
+      defaultBuiltInSectionVisibility.education
+    ),
+    skills: readBoolean(
+      visibility.skills,
+      defaultBuiltInSectionVisibility.skills
+    ),
+    projects: readBoolean(
+      visibility.projects,
+      defaultBuiltInSectionVisibility.projects
+    ),
+    certifications: readBoolean(
+      visibility.certifications,
+      defaultBuiltInSectionVisibility.certifications
+    ),
+  };
+}
+
 export function normalizeResumeData(
   value: unknown,
   options: ResumeNormalizationOptions = {}
@@ -669,7 +703,10 @@ export function normalizeResumeData(
       certifications: Array.isArray(legacy.certifications)
         ? legacy.certifications
         : [],
-      customSections: [],
+      customSections: Array.isArray(legacy.customSections)
+        ? legacy.customSections
+        : [],
+      sectionVisibility: normalizeSectionVisibility(legacy.sectionVisibility),
     },
     options
   );
