@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/session";
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -13,6 +14,12 @@ const ALLOWED_MIME_TYPES = new Map<string, string>([
 
 export async function POST(request: Request) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
 

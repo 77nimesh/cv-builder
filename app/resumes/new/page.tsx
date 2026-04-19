@@ -1,16 +1,17 @@
 import { redirect } from "next/navigation";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createDefaultResumeData } from "@/lib/default-resume";
-import type { Prisma } from "@prisma/client";
+import { requireCurrentUser } from "@/lib/auth/session";
 
 export default async function NewResumePage() {
+  const user = await requireCurrentUser();
   const data = createDefaultResumeData({ template: "modern-1" });
-
-  // Convert to plain JSON and cast for Prisma Json input typing
   const jsonData = JSON.parse(JSON.stringify(data)) as Prisma.InputJsonObject;
 
   const resume = await prisma.resume.create({
     data: {
+      userId: user.id,
       title: "Untitled Resume",
       template: data.layout.template,
       themeColor: data.layout.themeColor,

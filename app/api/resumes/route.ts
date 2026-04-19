@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { createDefaultResumeData } from "@/lib/default-resume";
-import { normalizeResumeRecord } from "@/lib/resume/record";
+import { prisma } from "@/lib/prisma";
 import { toPrismaResumeData } from "@/lib/resume/prisma-json";
+import { normalizeResumeRecord } from "@/lib/resume/record";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const resumes = await prisma.resume.findMany({
+      where: { userId: user.id },
       orderBy: { updatedAt: "desc" },
     });
 
@@ -24,10 +32,17 @@ export async function GET() {
 
 export async function POST() {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const data = createDefaultResumeData({ template: "modern-1" });
 
     const resume = await prisma.resume.create({
       data: {
+        userId: user.id,
         title: "Untitled Resume",
         template: data.layout.template,
         themeColor: data.layout.themeColor,

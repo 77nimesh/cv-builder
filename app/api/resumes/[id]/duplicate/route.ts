@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import type { ResumeData, ResumeRecord } from "@/lib/types";
 import { normalizeResumeRecord } from "@/lib/resume/record";
 import { toPrismaResumeData } from "@/lib/resume/prisma-json";
-import type { ResumeData, ResumeRecord } from "@/lib/types";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
+import {
+  findOwnedResume,
+  listOwnedResumeTitles,
+} from "@/lib/auth/resume-access";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -48,20 +53,22 @@ function readSyncedFontFamily(resume: ResumeRecord) {
 
 export async function POST(_: Request, context: RouteContext) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
 
-    const sourceResumeRaw = await prisma.resume.findUnique({
-      where: { id },
-    });
+    const sourceResumeRaw = await findOwnedResume(user.id, id);
 
     if (!sourceResumeRaw) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
     const sourceResume = normalizeResumeRecord(sourceResumeRaw);
-    const existingResumes = await prisma.resume.findMany({
-      select: { title: true },
-    });
+    const existingTitles = await listOwnedResumeTitles(user.id);
 
     const template = readActiveTemplate(sourceResume);
     const themeColor = readSyncedThemeColor(sourceResume);
@@ -79,10 +86,8 @@ export async function POST(_: Request, context: RouteContext) {
 
     const duplicatedResume = await prisma.resume.create({
       data: {
-        title: buildDuplicateTitle(
-          sourceResume.title,
-          existingResumes.map((resume) => resume.title)
-        ),
+        userId: user.id,
+        title: buildDuplicateTitle(sourceResume.title, existingTitles),
         template,
         themeColor,
         fontFamily,

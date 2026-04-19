@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import ResumeForm from "@/components/forms/resume-form";
 import DuplicateResumeButton from "@/components/actions/duplicate-resume-button";
+import LogoutButton from "@/components/auth/logout-button";
 import { normalizeResumeRecord } from "@/lib/resume/record";
+import { requireCurrentUser } from "@/lib/auth/session";
+import { findOwnedResume } from "@/lib/auth/resume-access";
 
 type EditResumePageProps = {
   params: Promise<{ id: string }>;
@@ -12,11 +14,10 @@ type EditResumePageProps = {
 export default async function EditResumePage({
   params,
 }: EditResumePageProps) {
+  const user = await requireCurrentUser();
   const { id } = await params;
 
-  const resume = await prisma.resume.findUnique({
-    where: { id },
-  });
+  const resume = await findOwnedResume(user.id, id);
 
   if (!resume) {
     notFound();
@@ -38,20 +39,16 @@ export default async function EditResumePage({
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
-            >
-              Home
-            </Link>
-
+          <div className="flex flex-wrap items-center gap-3">
+            
             <Link
               href="/resumes"
               className="rounded-xl border border-slate-300 bg-white px-4 py-3"
             >
               Resumes
             </Link>
+
+           
 
             <DuplicateResumeButton
               resumeId={normalizedResume.id}
@@ -64,6 +61,9 @@ export default async function EditResumePage({
             >
               Preview
             </Link>
+
+             <LogoutButton className="rounded-xl border border-slate-300 bg-white px-4 py-3" />
+
           </div>
         </div>
 

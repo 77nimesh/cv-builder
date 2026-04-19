@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import PreviewEditor from "@/components/preview/preview-editor";
+import LogoutButton from "@/components/auth/logout-button";
 import { getResumeTemplateDefinitionForRecord } from "@/components/templates/template-registry";
 import { normalizeResumeRecord } from "@/lib/resume/record";
+import { requireCurrentUser } from "@/lib/auth/session";
+import { findOwnedResume } from "@/lib/auth/resume-access";
 
 type PreviewResumePageProps = {
   params: Promise<{ id: string }>;
@@ -12,11 +14,10 @@ type PreviewResumePageProps = {
 export default async function PreviewResumePage({
   params,
 }: PreviewResumePageProps) {
+  const user = await requireCurrentUser();
   const { id } = await params;
 
-  const resume = await prisma.resume.findUnique({
-    where: { id },
-  });
+  const resume = await findOwnedResume(user.id, id);
 
   if (!resume) {
     notFound();
@@ -29,7 +30,7 @@ export default async function PreviewResumePage({
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="sticky top-0 pt-8 z-30 pb-6 flex items-center justify-between gap-4 bg-slate-100">
+        <div className="sticky top-0 z-30 flex items-center justify-between gap-4 bg-slate-100 pb-6 pt-8">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Resume Preview</h1>
             <p className="mt-1 text-sm text-slate-600">
@@ -40,7 +41,7 @@ export default async function PreviewResumePage({
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               href={`/resumes/${normalizedResume.id}/edit`}
               className="rounded-xl border border-slate-300 bg-white px-4 py-2"
@@ -62,6 +63,8 @@ export default async function PreviewResumePage({
             >
               Download PDF
             </a>
+
+            <LogoutButton className="rounded-xl border border-slate-300 bg-white px-4 py-2" />
           </div>
         </div>
 

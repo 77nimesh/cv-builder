@@ -1,5 +1,10 @@
 import { chromium, type Page } from "playwright";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/session";
+import {
+  createResumePrintAccessToken,
+  findOwnedResume,
+} from "@/lib/auth/resume-access";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -55,13 +60,31 @@ async function waitForPrintReady(page: Page) {
 }
 
 export async function GET(req: NextRequest, context: RouteContext) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
+
+  const resume = await findOwnedResume(user.id, id);
+
+  if (!resume) {
+    return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+  }
 
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
 
   try {
     const origin = req.nextUrl.origin;
-    const printUrl = `${origin}/resumes/${id}/print?view=pdf&ts=${Date.now()}`;
+    const printAccessToken = createResumePrintAccessToken({
+      resumeId: id,
+      userId: user.id,
+    });
+    const printUrl = `${origin}/resumes/${id}/print?view=pdf&printAccessToken=${encodeURIComponent(
+      printAccessToken
+    )}&ts=${Date.now()}`;
 
     browser = await chromium.launch({
       headless: true,

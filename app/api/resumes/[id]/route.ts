@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import type { ResumePhotoShape } from "@/lib/types";
 import { buildResumeDataFromFormData } from "@/lib/resume/normalizers";
 import {
@@ -8,6 +7,9 @@ import {
 } from "@/lib/resume/record";
 import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 import { resumeFormSchema } from "@/lib/validators";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
+import { findOwnedResume } from "@/lib/auth/resume-access";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -67,11 +69,15 @@ function readCanonicalPayloadPhotoShape(rawBody: Record<string, unknown>) {
 
 export async function GET(_: NextRequest, context: RouteContext) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
 
-    const resume = await prisma.resume.findUnique({
-      where: { id },
-    });
+    const resume = await findOwnedResume(user.id, id);
 
     if (!resume) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
@@ -89,11 +95,15 @@ export async function GET(_: NextRequest, context: RouteContext) {
 
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
 
-    const existingResumeRaw = await prisma.resume.findUnique({
-      where: { id },
-    });
+    const existingResumeRaw = await findOwnedResume(user.id, id);
 
     if (!existingResumeRaw) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
@@ -183,7 +193,19 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
 export async function DELETE(_: NextRequest, context: RouteContext) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
+
+    const resume = await findOwnedResume(user.id, id);
+
+    if (!resume) {
+      return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+    }
 
     await prisma.resume.delete({
       where: { id },

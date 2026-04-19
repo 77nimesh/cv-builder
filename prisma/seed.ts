@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { hashPassword, normalizeEmail } from "../lib/auth/password";
+import { hashPassword, normalizeEmail } from "@/lib/auth/password";
 
 const prisma = new PrismaClient();
 
@@ -7,7 +7,7 @@ async function main() {
   const adminEmail = normalizeEmail(
     process.env.ADMIN_SEED_EMAIL ?? "77nimesh@gmail.com"
   );
-  const adminPassword = process.env.ADMIN_SEED_PASSWORD ?? "ChangeMe123!";
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD ?? "Password123!";
   const adminName = process.env.ADMIN_SEED_NAME?.trim() || "Nimesh Gamage";
   const now = new Date();
 
