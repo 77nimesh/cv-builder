@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 import { normalizeResumeRecord } from "@/lib/resume/record";
 import { getCurrentUser } from "@/lib/auth/session";
+import { buildAccessibleResumeWhere } from "@/lib/auth/resume-access";
 
 export async function GET() {
   try {
@@ -14,7 +15,7 @@ export async function GET() {
     }
 
     const resumes = await prisma.resume.findMany({
-      where: { userId: user.id },
+      where: buildAccessibleResumeWhere(user),
       orderBy: { updatedAt: "desc" },
     });
 

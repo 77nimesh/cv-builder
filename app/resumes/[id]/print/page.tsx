@@ -3,7 +3,8 @@ import ResumePreview from "@/components/preview/resume-preview";
 import { normalizeResumeRecord } from "@/lib/resume/record";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
-  findOwnedResume,
+  findAccessibleResume,
+  findResumeFromPrintAccessPayload,
   verifyResumePrintAccessToken,
 } from "@/lib/auth/resume-access";
 
@@ -23,14 +24,13 @@ export default async function PrintResumePage({
 
   const user = await getCurrentUser();
 
-  let resume =
-    user?.id != null ? await findOwnedResume(user.id, id) : null;
+  let resume = user ? await findAccessibleResume(user, id) : null;
 
   if (!resume) {
     const tokenPayload = verifyResumePrintAccessToken(printAccessToken);
 
     if (tokenPayload && tokenPayload.resumeId === id) {
-      resume = await findOwnedResume(tokenPayload.userId, id);
+      resume = await findResumeFromPrintAccessPayload(tokenPayload);
     }
   }
 

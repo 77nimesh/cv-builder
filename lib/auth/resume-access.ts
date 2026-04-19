@@ -1,13 +1,23 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const PRINT_ACCESS_TOKEN_TTL_MS = 2 * 60 * 1000;
 
+export type ResumeAccessViewer = {
+  id: string;
+  role?: string | null;
+};
+
 type ResumePrintAccessPayload = {
   resumeId: string;
-  userId: string;
+  resumeUserId: string | null;
   expiresAt: number;
 };
+
+function isAdminViewer(viewer: ResumeAccessViewer | null | undefined) {
+  return viewer?.role === "ADMIN";
+}
 
 function getPrintAccessSecret() {
   const secret = process.env.AUTH_SECRET;
@@ -25,18 +35,37 @@ function signValue(value: string) {
     .digest("base64url");
 }
 
-export async function findOwnedResume(userId: string, resumeId: string) {
+export function buildAccessibleResumeWhere(
+  viewer: ResumeAccessViewer,
+  resumeId?: string
+): Prisma.ResumeWhereInput {
+  if (isAdminViewer(viewer)) {
+    return resumeId ? { id: resumeId } : {};
+  }
+
+  return resumeId
+    ? { id: resumeId, userId: viewer.id }
+    : { userId: viewer.id };
+}
+
+export async function findAccessibleResume(
+  viewer: ResumeAccessViewer,
+  resumeId: string
+) {
   return prisma.resume.findFirst({
-    where: {
-      id: resumeId,
-      userId,
-    },
+    where: buildAccessibleResumeWhere(viewer, resumeId),
   });
 }
 
-export async function listOwnedResumeTitles(userId: string) {
+export async function listResumeTitlesForOwner(
+  ownerUserId: string | null | undefined
+) {
+  if (!ownerUserId) {
+    return [];
+  }
+
   const resumes = await prisma.resume.findMany({
-    where: { userId },
+    where: { userId: ownerUserId },
     select: { title: true },
   });
 
@@ -45,12 +74,12 @@ export async function listOwnedResumeTitles(userId: string) {
 
 export function createResumePrintAccessToken(input: {
   resumeId: string;
-  userId: string;
+  resumeUserId: string | null;
   expiresInMs?: number;
 }) {
   const payload: ResumePrintAccessPayload = {
     resumeId: input.resumeId,
-    userId: input.userId,
+    resumeUserId: input.resumeUserId,
     expiresAt: Date.now() + (input.expiresInMs ?? PRINT_ACCESS_TOKEN_TTL_MS),
   };
 
@@ -79,8 +108,8 @@ export function verifyResumePrintAccessToken(token?: string | null) {
     return null;
   }
 
-  const providedBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expectedSignature);
+  const providedBuffer = Buffer.from(signature, "utf8");
+  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
 
   if (!timingSafeEqual(providedBuffer, expectedBuffer)) {
     return null;
@@ -93,8 +122,14 @@ export function verifyResumePrintAccessToken(token?: string | null) {
 
     if (
       typeof parsed.resumeId !== "string" ||
-      typeof parsed.userId !== "string" ||
       typeof parsed.expiresAt !== "number"
+    ) {
+      return null;
+    }
+
+    if (
+      parsed.resumeUserId !== null &&
+      typeof parsed.resumeUserId !== "string"
     ) {
       return null;
     }
@@ -107,4 +142,21 @@ export function verifyResumePrintAccessToken(token?: string | null) {
   } catch {
     return null;
   }
+}
+
+export async function findResumeFromPrintAccessPayload(
+  payload: ResumePrintAccessPayload
+) {
+  return prisma.resume.findFirst({
+    where:
+      payload.resumeUserId === null
+        ? {
+            id: payload.resumeId,
+            userId: null,
+          }
+        : {
+            id: payload.resumeId,
+            userId: payload.resumeUserId,
+          },
+  });
 }

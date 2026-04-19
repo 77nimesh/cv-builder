@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   createResumePrintAccessToken,
-  findOwnedResume,
+  findAccessibleResume,
 } from "@/lib/auth/resume-access";
 
 type RouteContext = {
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  const resume = await findOwnedResume(user.id, id);
+  const resume = await findAccessibleResume(user, id);
 
   if (!resume) {
     return NextResponse.json({ error: "Resume not found" }, { status: 404 });
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const origin = req.nextUrl.origin;
     const printAccessToken = createResumePrintAccessToken({
       resumeId: id,
-      userId: user.id,
+      resumeUserId: resume.userId ?? null,
     });
     const printUrl = `${origin}/resumes/${id}/print?view=pdf&printAccessToken=${encodeURIComponent(
       printAccessToken

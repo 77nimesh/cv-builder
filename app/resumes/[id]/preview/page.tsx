@@ -4,8 +4,8 @@ import PreviewEditor from "@/components/preview/preview-editor";
 import LogoutButton from "@/components/auth/logout-button";
 import { getResumeTemplateDefinitionForRecord } from "@/components/templates/template-registry";
 import { normalizeResumeRecord } from "@/lib/resume/record";
-import { requireCurrentUser } from "@/lib/auth/session";
-import { findOwnedResume } from "@/lib/auth/resume-access";
+import { isAdminUser, requireCurrentUser } from "@/lib/auth/session";
+import { findAccessibleResume } from "@/lib/auth/resume-access";
 
 type PreviewResumePageProps = {
   params: Promise<{ id: string }>;
@@ -17,11 +17,14 @@ export default async function PreviewResumePage({
   const user = await requireCurrentUser();
   const { id } = await params;
 
-  const resume = await findOwnedResume(user.id, id);
+  const resume = await findAccessibleResume(user, id);
 
   if (!resume) {
     notFound();
   }
+
+  const adminOverrideActive =
+    isAdminUser(user) && resume.userId !== null && resume.userId !== user.id;
 
   const normalizedResume = normalizeResumeRecord(resume);
   const templateDefinition =
@@ -67,6 +70,15 @@ export default async function PreviewResumePage({
             <LogoutButton className="rounded-xl border border-slate-300 bg-white px-4 py-2" />
           </div>
         </div>
+
+        {adminOverrideActive ? (
+          <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900">
+            <p className="font-medium">Admin access override is active.</p>
+            <p className="mt-1 text-sm">
+              You are previewing a resume that belongs to another user.
+            </p>
+          </div>
+        ) : null}
 
         <PreviewEditor resume={normalizedResume} />
       </div>

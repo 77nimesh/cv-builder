@@ -1087,8 +1087,8 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
     </form>
 
       {/* ── Sticky save button pinned to the right of the form ── */}
-      <div className="relative w-0">
-        <div className="fixed bottom-6 ml-4 pt-6">
+      <div className="relative w-fit">
+        <div className="fixed bottom-6 right-6 z-50">
           <button
             type="button"
             onClick={handleSubmit(onSubmit)}

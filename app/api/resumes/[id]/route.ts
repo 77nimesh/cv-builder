@@ -9,7 +9,7 @@ import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 import { resumeFormSchema } from "@/lib/validators";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { findOwnedResume } from "@/lib/auth/resume-access";
+import { findAccessibleResume } from "@/lib/auth/resume-access";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -77,7 +77,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    const resume = await findOwnedResume(user.id, id);
+    const resume = await findAccessibleResume(user, id);
 
     if (!resume) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
@@ -103,7 +103,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    const existingResumeRaw = await findOwnedResume(user.id, id);
+    const existingResumeRaw = await findAccessibleResume(user, id);
 
     if (!existingResumeRaw) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
@@ -170,7 +170,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     }
 
     const updatedResume = await prisma.resume.update({
-      where: { id },
+      where: { id: existingResumeRaw.id },
       data: {
         title: payload.title,
         template: payload.template,
@@ -201,14 +201,14 @@ export async function DELETE(_: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    const resume = await findOwnedResume(user.id, id);
+    const resume = await findAccessibleResume(user, id);
 
     if (!resume) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
     await prisma.resume.delete({
-      where: { id },
+      where: { id: resume.id },
     });
 
     return NextResponse.json({ success: true });

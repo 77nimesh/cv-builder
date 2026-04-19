@@ -5,8 +5,8 @@ import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
-  findOwnedResume,
-  listOwnedResumeTitles,
+  findAccessibleResume,
+  listResumeTitlesForOwner,
 } from "@/lib/auth/resume-access";
 
 type RouteContext = {
@@ -61,14 +61,15 @@ export async function POST(_: Request, context: RouteContext) {
 
     const { id } = await context.params;
 
-    const sourceResumeRaw = await findOwnedResume(user.id, id);
+    const sourceResumeRaw = await findAccessibleResume(user, id);
 
     if (!sourceResumeRaw) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
     const sourceResume = normalizeResumeRecord(sourceResumeRaw);
-    const existingTitles = await listOwnedResumeTitles(user.id);
+    const targetOwnerUserId = sourceResumeRaw.userId ?? user.id;
+    const existingTitles = await listResumeTitlesForOwner(targetOwnerUserId);
 
     const template = readActiveTemplate(sourceResume);
     const themeColor = readSyncedThemeColor(sourceResume);
@@ -86,7 +87,7 @@ export async function POST(_: Request, context: RouteContext) {
 
     const duplicatedResume = await prisma.resume.create({
       data: {
-        userId: user.id,
+        userId: targetOwnerUserId,
         title: buildDuplicateTitle(sourceResume.title, existingTitles),
         template,
         themeColor,
