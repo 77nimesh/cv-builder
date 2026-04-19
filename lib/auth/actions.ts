@@ -447,4 +447,9 @@ export async function changePasswordAction(
   await signOut({
     redirectTo: "/login?passwordChanged=1",
   });
+
+  return {
+    error: null,
+    success: "Password changed successfully.",
+  };
 }
