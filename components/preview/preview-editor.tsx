@@ -402,7 +402,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+      <div className="sticky top-32 z-20 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
         <p>
           Drag sections with the section handle. Drag items with the item handle
           inside Experience, Education, Projects, Certifications, and Custom

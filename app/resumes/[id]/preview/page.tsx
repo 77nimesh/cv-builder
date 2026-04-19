@@ -29,7 +29,7 @@ export default async function PreviewResumePage({
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="sticky top-0 pt-8 z-30 pb-6 flex items-center justify-between gap-4 bg-slate-100">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Resume Preview</h1>
             <p className="mt-1 text-sm text-slate-600">
