@@ -1,7 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth/password";
-import { markUserEmailVerified } from "@/lib/auth/user";
 
 const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
@@ -115,7 +114,10 @@ export async function consumeEmailVerificationToken(rawToken: string) {
       data: { usedAt: new Date() },
     });
 
-    await markUserEmailVerified(tokenRecord.userId);
+    await tx.user.update({
+      where: { id: tokenRecord.userId },
+      data: { emailVerified: new Date() },
+    });
 
     await tx.emailVerificationToken.deleteMany({
       where: {

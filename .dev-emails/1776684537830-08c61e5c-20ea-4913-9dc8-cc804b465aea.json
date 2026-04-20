@@ -1,0 +1,10 @@
+{
+  "id": "1776684537830-08c61e5c-20ea-4913-9dc8-cc804b465aea",
+  "to": "christinanadee79@gmail.com",
+  "subject": "Verify your CV Builder email address",
+  "text": "Hi Christina Ranasinghe,\n\nPlease verify your email address for CV Builder by opening the link below:\nhttp://localhost:3000/verify-email?token=XDoQX4UmPHCZqkaHSuOImTLzkiMEwwcnIpoMHPJTZmg\n\nIf you did not create this account, you can ignore this email.",
+  "html": "\n      <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;\">\n        <p>Hi Christina Ranasinghe,</p>\n        <p>Please verify your email address for <strong>CV Builder</strong> by clicking the button below.</p>\n        <p>\n          <a\n            href=\"http://localhost:3000/verify-email?token=XDoQX4UmPHCZqkaHSuOImTLzkiMEwwcnIpoMHPJTZmg\"\n            style=\"display:inline-block;padding:12px 18px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:12px;\"\n          >\n            Verify Email\n          </a>\n        </p>\n        <p>If the button does not work, copy and paste this URL into your browser:</p>\n        <p><a href=\"http://localhost:3000/verify-email?token=XDoQX4UmPHCZqkaHSuOImTLzkiMEwwcnIpoMHPJTZmg\">http://localhost:3000/verify-email?token=XDoQX4UmPHCZqkaHSuOImTLzkiMEwwcnIpoMHPJTZmg</a></p>\n        <p>If you did not create this account, you can ignore this email.</p>\n      </div>\n    ",
+  "purpose": "verify-email",
+  "createdAt": "2026-04-20T11:28:57.831Z",
+  "previewUrl": "http://localhost:3000/dev/emails/1776684537830-08c61e5c-20ea-4913-9dc8-cc804b465aea"
+}
