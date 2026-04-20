@@ -1,3 +1,4 @@
+// lib/types.ts
 export type ResumeZone = "main" | "sidebar";
 
 export type PersonalDetails = {
@@ -137,6 +138,21 @@ export type ResumeData = {
   sections: ResumeSection[];
 };
 
+export type ImageAssetRecord = {
+  id: string;
+  userId: string;
+  kind: string;
+  storageProvider: string;
+  storageKey: string;
+  sourceFileName: string | null;
+  mimeType: string;
+  byteSize: number;
+  width: number | null;
+  height: number | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
 export type ResumeRecord = {
   id: string;
   title: string;
@@ -145,6 +161,7 @@ export type ResumeRecord = {
   fontFamily: string | null;
   data: ResumeData;
   photoPath: string | null;
+  photoAssetId: string | null;
   createdAt: string | Date;
   updatedAt: string | Date;
 };

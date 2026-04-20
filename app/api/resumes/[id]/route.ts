@@ -10,6 +10,10 @@ import { resumeFormSchema } from "@/lib/validators";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { findAccessibleResume } from "@/lib/auth/resume-access";
+import {
+  findAccessibleResumePhotoAsset,
+  resolveImageAssetPublicUrl,
+} from "@/lib/assets/image-assets";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -67,6 +71,68 @@ function readCanonicalPayloadPhotoShape(rawBody: Record<string, unknown>) {
   return readPhotoShape(layout?.photoShape);
 }
 
+async function resolvePhotoSelection(input: {
+  user: Awaited<ReturnType<typeof getCurrentUser>>;
+  resumeOwnerUserId: string | null;
+  existingPhotoPath: string | null;
+  existingPhotoAssetId: string | null;
+  requestedPhotoPath?: string | null;
+  requestedPhotoAssetId?: string | null;
+}) {
+  const {
+    user,
+    resumeOwnerUserId,
+    existingPhotoPath,
+    existingPhotoAssetId,
+    requestedPhotoPath,
+    requestedPhotoAssetId,
+  } = input;
+
+  if (requestedPhotoAssetId !== undefined) {
+    if (!requestedPhotoAssetId) {
+      return {
+        photoAssetId: null,
+        photoPath: requestedPhotoPath ?? null,
+      };
+    }
+
+    const asset = await findAccessibleResumePhotoAsset({
+      assetId: requestedPhotoAssetId,
+      viewerUserId: user?.id ?? "",
+      viewerRole: user?.role,
+      resumeOwnerUserId,
+    });
+
+    if (!asset) {
+      throw new Error("Selected photo was not found or is not accessible.");
+    }
+
+    return {
+      photoAssetId: asset.id,
+      photoPath: resolveImageAssetPublicUrl(asset),
+    };
+  }
+
+  if (requestedPhotoPath !== undefined) {
+    if (!requestedPhotoPath && existingPhotoAssetId) {
+      return {
+        photoAssetId: null,
+        photoPath: null,
+      };
+    }
+
+    return {
+      photoAssetId: existingPhotoAssetId,
+      photoPath: requestedPhotoPath,
+    };
+  }
+
+  return {
+    photoAssetId: existingPhotoAssetId,
+    photoPath: existingPhotoPath,
+  };
+}
+
 export async function GET(_: NextRequest, context: RouteContext) {
   try {
     const user = await getCurrentUser();
@@ -113,9 +179,18 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const rawBody = await req.json();
 
     let payload: ReturnType<typeof buildResumeUpdatePayload>;
+    let requestedPhotoPath: string | null | undefined;
+    let requestedPhotoAssetId: string | null | undefined;
 
     if (hasCanonicalSectionsPayload(rawBody)) {
       const rawRecord = rawBody as Record<string, unknown>;
+
+      requestedPhotoPath = hasOwn(rawRecord, "photoPath")
+        ? readNullableString(rawRecord.photoPath)
+        : undefined;
+      requestedPhotoAssetId = hasOwn(rawRecord, "photoAssetId")
+        ? readNullableString(rawRecord.photoAssetId)
+        : undefined;
 
       payload = buildResumeUpdatePayload(existingResume, rawRecord.data, {
         title: hasOwn(rawRecord, "title")
@@ -130,9 +205,8 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         fontFamily: hasOwn(rawRecord, "fontFamily")
           ? readNullableString(rawRecord.fontFamily)
           : undefined,
-        photoPath: hasOwn(rawRecord, "photoPath")
-          ? readNullableString(rawRecord.photoPath)
-          : undefined,
+        photoPath: requestedPhotoPath,
+        photoAssetId: requestedPhotoAssetId,
         photoShape: readCanonicalPayloadPhotoShape(rawRecord),
       });
     } else {
@@ -145,10 +219,12 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         body.fontFamily === undefined
           ? existingResume.fontFamily
           : body.fontFamily ?? null;
-      const photoPath =
-        body.photoPath === undefined
-          ? existingResume.photoPath
-          : body.photoPath ?? null;
+
+      requestedPhotoPath =
+        body.photoPath === undefined ? undefined : body.photoPath ?? null;
+      requestedPhotoAssetId =
+        body.photoAssetId === undefined ? undefined : body.photoAssetId ?? null;
+
       const photoShape =
         body.photoShape ?? existingResume.data.layout.photoShape ?? "square";
 
@@ -164,10 +240,26 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         template: body.template,
         themeColor,
         fontFamily,
-        photoPath,
+        photoPath:
+          requestedPhotoPath === undefined
+            ? existingResume.photoPath
+            : requestedPhotoPath,
+        photoAssetId:
+          requestedPhotoAssetId === undefined
+            ? existingResume.photoAssetId
+            : requestedPhotoAssetId,
         photoShape,
       });
     }
+
+    const resolvedPhotoSelection = await resolvePhotoSelection({
+      user,
+      resumeOwnerUserId: existingResumeRaw.userId ?? null,
+      existingPhotoPath: existingResume.photoPath,
+      existingPhotoAssetId: existingResume.photoAssetId,
+      requestedPhotoPath,
+      requestedPhotoAssetId,
+    });
 
     const updatedResume = await prisma.resume.update({
       where: { id: existingResumeRaw.id },
@@ -176,7 +268,8 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         template: payload.template,
         themeColor: payload.themeColor,
         fontFamily: payload.fontFamily,
-        photoPath: payload.photoPath,
+        photoPath: resolvedPhotoSelection.photoPath,
+        photoAssetId: resolvedPhotoSelection.photoAssetId,
         data: toPrismaResumeData(payload.data),
       },
     });
@@ -184,6 +277,14 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     return NextResponse.json(normalizeResumeRecord(updatedResume));
   } catch (error) {
     console.error("Failed to update resume:", error);
+
+    if (
+      error instanceof Error &&
+      error.message === "Selected photo was not found or is not accessible."
+    ) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     return NextResponse.json(
       { error: "Failed to update resume" },
       { status: 500 }

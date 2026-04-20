@@ -71,6 +71,7 @@ export const resumeFormSchema = z.object({
   themeColor: z.string().nullable().optional(),
   fontFamily: z.string().nullable().optional(),
   photoPath: z.string().nullable().optional(),
+  photoAssetId: z.string().nullable().optional(),
   photoShape: z.enum(["square", "circle"]).optional(),
   data: z.object({
     personal: z.object({

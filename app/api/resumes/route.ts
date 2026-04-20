@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 import { normalizeResumeRecord } from "@/lib/resume/record";
 import { getCurrentUser } from "@/lib/auth/session";
-import { buildAccessibleResumeWhere } from "@/lib/auth/resume-access";
+import { listAccessibleResumes } from "@/lib/auth/resume-access";
 
 export async function GET() {
   try {
@@ -14,10 +14,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const resumes = await prisma.resume.findMany({
-      where: buildAccessibleResumeWhere(user),
-      orderBy: { updatedAt: "desc" },
-    });
+    const resumes = await listAccessibleResumes(user);
 
     return NextResponse.json(
       resumes.map((resume) => normalizeResumeRecord(resume))
@@ -49,6 +46,7 @@ export async function POST() {
         themeColor: data.layout.themeColor,
         fontFamily: data.layout.fontFamily,
         photoPath: null,
+        photoAssetId: null,
         data: toPrismaResumeData(data),
       },
     });

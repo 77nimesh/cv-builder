@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { resolveAssetPublicUrl } from "@/lib/assets/storage";
 
 const PRINT_ACCESS_TOKEN_TTL_MS = 2 * 60 * 1000;
 
@@ -14,6 +15,19 @@ type ResumePrintAccessPayload = {
   resumeUserId: string | null;
   expiresAt: number;
 };
+
+const accessibleResumeInclude = {
+  photoAsset: {
+    select: {
+      storageProvider: true,
+      storageKey: true,
+    },
+  },
+} satisfies Prisma.ResumeInclude;
+
+type AccessibleResumeWithPhotoAsset = Prisma.ResumeGetPayload<{
+  include: typeof accessibleResumeInclude;
+}>;
 
 function isAdminViewer(viewer: ResumeAccessViewer | null | undefined) {
   return viewer?.role === "ADMIN";
@@ -35,6 +49,20 @@ function signValue(value: string) {
     .digest("base64url");
 }
 
+function resolveResumePhotoPath(resume: AccessibleResumeWithPhotoAsset) {
+  const { photoAsset, ...rest } = resume;
+
+  return {
+    ...rest,
+    photoPath: photoAsset
+      ? resolveAssetPublicUrl({
+          storageProvider: photoAsset.storageProvider,
+          storageKey: photoAsset.storageKey,
+        })
+      : (resume.photoPath ?? null),
+  };
+}
+
 export function buildAccessibleResumeWhere(
   viewer: ResumeAccessViewer,
   resumeId?: string
@@ -52,9 +80,28 @@ export async function findAccessibleResume(
   viewer: ResumeAccessViewer,
   resumeId: string
 ) {
-  return prisma.resume.findFirst({
+  const resume = await prisma.resume.findFirst({
     where: buildAccessibleResumeWhere(viewer, resumeId),
+    include: accessibleResumeInclude,
   });
+
+  if (!resume) {
+    return null;
+  }
+
+  return resolveResumePhotoPath(resume);
+}
+
+export async function listAccessibleResumes(viewer: ResumeAccessViewer) {
+  const resumes = await prisma.resume.findMany({
+    where: buildAccessibleResumeWhere(viewer),
+    include: accessibleResumeInclude,
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+
+  return resumes.map(resolveResumePhotoPath);
 }
 
 export async function listResumeTitlesForOwner(
@@ -147,7 +194,7 @@ export function verifyResumePrintAccessToken(token?: string | null) {
 export async function findResumeFromPrintAccessPayload(
   payload: ResumePrintAccessPayload
 ) {
-  return prisma.resume.findFirst({
+  const resume = await prisma.resume.findFirst({
     where:
       payload.resumeUserId === null
         ? {
@@ -158,5 +205,12 @@ export async function findResumeFromPrintAccessPayload(
             id: payload.resumeId,
             userId: payload.resumeUserId,
           },
+    include: accessibleResumeInclude,
   });
+
+  if (!resume) {
+    return null;
+  }
+
+  return resolveResumePhotoPath(resume);
 }

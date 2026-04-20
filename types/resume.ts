@@ -1,11 +1,15 @@
+// types/resume.ts
 export type PersonalDetails = {
   fullName: string;
+  headline: string;
   email: string;
   phone: string;
   location: string;
   linkedIn: string;
   website: string;
 };
+
+export type ResumePhotoShape = "square" | "circle";
 
 export type ExperienceItem = {
   company: string;
@@ -79,6 +83,7 @@ export type ResumeLayout = {
   template: string;
   themeColor: string | null;
   fontFamily: string | null;
+  photoShape: ResumePhotoShape;
 };
 
 export type ResumeSectionItem = {
@@ -103,6 +108,21 @@ export type ResumeData = {
   sections: ResumeSection[];
 };
 
+export type ImageAssetRecord = {
+  id: string;
+  userId: string;
+  kind: string;
+  storageProvider: string;
+  storageKey: string;
+  sourceFileName: string | null;
+  mimeType: string;
+  byteSize: number;
+  width: number | null;
+  height: number | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
 export type ResumeRecord = {
   id: string;
   title: string;
@@ -111,6 +131,7 @@ export type ResumeRecord = {
   fontFamily: string | null;
   data: ResumeData;
   photoPath: string | null;
+  photoAssetId: string | null;
   createdAt: string | Date;
   updatedAt: string | Date;
 };

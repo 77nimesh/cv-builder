@@ -302,6 +302,7 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         resume.data.layout.fontFamily ??
         DEFAULT_RESUME_FONT_ID,
       photoPath: resume.photoPath ?? "",
+      photoAssetId: resume.photoAssetId ?? null,
       photoShape: resume.data.layout.photoShape ?? "square",
       data: getResumeFormData(resume.data),
     },
@@ -410,6 +411,7 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         <h2 className="text-xl font-semibold">Resume Settings</h2>
 
         <input type="hidden" {...register("photoPath")} />
+        <input type="hidden" {...register("photoAssetId")} />
         <input type="hidden" {...register("photoShape")} />
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -470,9 +472,14 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
         <div className="mt-6">
           <PhotoUploadField
             photoPath={watch("photoPath") ?? ""}
+            photoAssetId={watch("photoAssetId") ?? null}
             photoShape={watch("photoShape") === "circle" ? "circle" : "square"}
-            onChange={(nextPhotoPath) => {
+            onChange={({ photoPath: nextPhotoPath, photoAssetId: nextPhotoAssetId }) => {
               setValue("photoPath", nextPhotoPath, {
+                shouldDirty: true,
+                shouldTouch: true,
+              });
+              setValue("photoAssetId", nextPhotoAssetId, {
                 shouldDirty: true,
                 shouldTouch: true,
               });

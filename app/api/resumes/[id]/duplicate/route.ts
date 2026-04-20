@@ -22,11 +22,11 @@ function buildDuplicateTitle(title: string, existingTitles: string[]) {
 
   let copyNumber = 2;
 
-  while (existingTitles.includes(`${title} (Copy ${copyNumber})`)) {
+  while (existingTitles.includes(`<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>t</mi><mi>i</mi><mi>t</mi><mi>l</mi><mi>e</mi></mrow><mo stretchy="false">(</mo><mi>C</mi><mi>o</mi><mi>p</mi><mi>y</mi></mrow><annotation encoding="application/x-tex">{title} (Copy</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right:0.01968em;">tl</span><span class="mord mathnormal">e</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal">o</span><span class="mord mathnormal">p</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span>{copyNumber})`)) {
     copyNumber += 1;
   }
 
-  return `${title} (Copy ${copyNumber})`;
+  return `<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>t</mi><mi>i</mi><mi>t</mi><mi>l</mi><mi>e</mi></mrow><mo stretchy="false">(</mo><mi>C</mi><mi>o</mi><mi>p</mi><mi>y</mi></mrow><annotation encoding="application/x-tex">{title} (Copy</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right:0.01968em;">tl</span><span class="mord mathnormal">e</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord mathnormal">o</span><span class="mord mathnormal">p</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span>{copyNumber})`;
 }
 
 function cloneResumeData(data: ResumeData): ResumeData {
@@ -93,6 +93,7 @@ export async function POST(_: Request, context: RouteContext) {
         themeColor,
         fontFamily,
         photoPath: sourceResume.photoPath,
+        photoAssetId: sourceResume.photoAssetId,
         data: toPrismaResumeData(duplicatedData),
       },
     });

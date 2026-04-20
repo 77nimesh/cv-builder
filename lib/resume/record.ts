@@ -1,8 +1,9 @@
 import type { ResumePhotoShape, ResumeRecord } from "@/lib/types";
 import { normalizeResumeData } from "@/lib/resume/normalizers";
 
-type ResumeRecordSource = Omit<ResumeRecord, "data"> & {
+type ResumeRecordSource = Omit<ResumeRecord, "data" | "photoAssetId"> & {
   data: unknown;
+  photoAssetId?: unknown;
 };
 
 type ResumeUpdateOverrides = {
@@ -11,6 +12,7 @@ type ResumeUpdateOverrides = {
   themeColor?: string | null;
   fontFamily?: string | null;
   photoPath?: string | null;
+  photoAssetId?: string | null;
   photoShape?: ResumePhotoShape | null;
 };
 
@@ -86,6 +88,7 @@ export function normalizeResumeRecord(record: ResumeRecordSource): ResumeRecord 
     themeColor: normalizedData.layout.themeColor,
     fontFamily: normalizedData.layout.fontFamily,
     photoPath: normalizeNullableString(record.photoPath, null),
+    photoAssetId: normalizeNullableString(record.photoAssetId, null),
     data: normalizedData,
   };
 }
@@ -111,6 +114,10 @@ export function buildResumeUpdatePayload(
     overrides.photoPath !== undefined
       ? normalizeNullableString(overrides.photoPath)
       : resume.photoPath ?? null;
+  const photoAssetId =
+    overrides.photoAssetId !== undefined
+      ? normalizeNullableString(overrides.photoAssetId)
+      : resume.photoAssetId ?? null;
   const photoShape =
     readPhotoShape(overrides.photoShape) ?? getBasePhotoShape(resume);
   const title = normalizeRequiredString(
@@ -131,6 +138,7 @@ export function buildResumeUpdatePayload(
     themeColor: normalizedData.layout.themeColor,
     fontFamily: normalizedData.layout.fontFamily,
     photoPath,
+    photoAssetId,
     photoShape: normalizedData.layout.photoShape,
     data: normalizedData,
   };

@@ -1,18 +1,31 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { writeFile } from "node:fs/promises";
 import { NextResponse } from "next/server";
+import {
+  ALLOWED_RESUME_PHOTO_MIME_TYPES,
+  MAX_RESUME_PHOTO_UPLOAD_BYTES,
+  RESUME_PHOTO_ASSET_KIND,
+} from "@/lib/assets/constants";
+import {
+  assertUserCanCreateResumePhotoAsset,
+  ImageAssetLimitError,
+} from "@/lib/assets/image-assets";
+import { optimizeCanonicalResumePhoto } from "@/lib/assets/image-optimizer";
+import {
+  deleteLocalAssetByStorageKey,
+  prepareLocalAssetDestination,
+} from "@/lib/assets/storage";
 import { getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/prisma";
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
-
-const ALLOWED_MIME_TYPES = new Map<string, string>([
-  ["image/jpeg", ".jpg"],
-  ["image/png", ".png"],
-  ["image/webp", ".webp"],
-]);
+function buildFilenameBase(originalName: string) {
+  return originalName.replace(/\.[^.]+$/, "") || "resume-photo";
+}
 
 export async function POST(request: Request) {
+  let preparedDestination:
+    | Awaited<ReturnType<typeof prepareLocalAssetDestination>>
+    | null = null;
+
   try {
     const user = await getCurrentUser();
 
@@ -30,42 +43,69 @@ export async function POST(request: Request) {
       );
     }
 
-    const extension = ALLOWED_MIME_TYPES.get(file.type);
-
-    if (!extension) {
+    if (!ALLOWED_RESUME_PHOTO_MIME_TYPES.has(file.type)) {
       return NextResponse.json(
         { error: "Only JPG, PNG, and WebP images are supported" },
         { status: 400 }
       );
     }
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
+    if (file.size > MAX_RESUME_PHOTO_UPLOAD_BYTES) {
       return NextResponse.json(
         { error: "Photo must be 10MB or smaller" },
         { status: 400 }
       );
     }
 
-    const uploadDirectory = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "resume-photos"
-    );
+    await assertUserCanCreateResumePhotoAsset(user.id);
 
-    await mkdir(uploadDirectory, { recursive: true });
+    const sourceBuffer = Buffer.from(await file.arrayBuffer());
+    const optimizedPhoto = await optimizeCanonicalResumePhoto(sourceBuffer);
 
-    const filename = `${Date.now()}-${randomUUID()}${extension}`;
-    const absoluteFilePath = path.join(uploadDirectory, filename);
-    const arrayBuffer = await file.arrayBuffer();
+    preparedDestination = await prepareLocalAssetDestination({
+      userId: user.id,
+      extension: optimizedPhoto.extension,
+      kind: RESUME_PHOTO_ASSET_KIND,
+      filenameBase: buildFilenameBase(file.name),
+    });
 
-    await writeFile(absoluteFilePath, Buffer.from(arrayBuffer));
+    await writeFile(preparedDestination.absoluteFilePath, optimizedPhoto.buffer);
+
+    const imageAsset = await prisma.imageAsset.create({
+      data: {
+        userId: user.id,
+        kind: RESUME_PHOTO_ASSET_KIND,
+        storageProvider: preparedDestination.storageProvider,
+        storageKey: preparedDestination.storageKey,
+        sourceFileName: file.name,
+        mimeType: optimizedPhoto.mimeType,
+        byteSize: optimizedPhoto.byteSize,
+        width: optimizedPhoto.width,
+        height: optimizedPhoto.height,
+      },
+    });
 
     return NextResponse.json({
-      photoPath: `/uploads/resume-photos/${filename}`,
+      photoAssetId: imageAsset.id,
+      photoPath: preparedDestination.publicUrl,
+      mimeType: imageAsset.mimeType,
+      byteSize: imageAsset.byteSize,
+      width: imageAsset.width,
+      height: imageAsset.height,
     });
   } catch (error) {
     console.error("Failed to upload resume photo:", error);
+
+    if (preparedDestination) {
+      await deleteLocalAssetByStorageKey(preparedDestination.storageKey).catch(
+        () => undefined
+      );
+    }
+
+    if (error instanceof ImageAssetLimitError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+
     return NextResponse.json(
       { error: "Failed to upload photo" },
       { status: 500 }
