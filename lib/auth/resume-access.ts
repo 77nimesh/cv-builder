@@ -2,6 +2,14 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { resolveAssetPublicUrl } from "@/lib/assets/storage";
+import {
+  findActiveSupportContentGrantForActor,
+} from "@/lib/privacy/support-access";
+import {
+  type AuditAction,
+  AUDIT_TARGET_TYPES,
+  writeAuditLog,
+} from "@/lib/privacy/audit";
 
 const PRINT_ACCESS_TOKEN_TTL_MS = 2 * 60 * 1000;
 
@@ -29,9 +37,13 @@ type AccessibleResumeWithPhotoAsset = Prisma.ResumeGetPayload<{
   include: typeof accessibleResumeInclude;
 }>;
 
-function isAdminViewer(viewer: ResumeAccessViewer | null | undefined) {
-  return viewer?.role === "ADMIN";
-}
+export type ResumeContentAccessMode = "owner" | "support-grant";
+
+export type ResumeContentAccessResult = {
+  resume: ReturnType<typeof resolveResumePhotoPath>;
+  accessMode: ResumeContentAccessMode;
+  supportAccessGrantId: string | null;
+};
 
 function getPrintAccessSecret() {
   const secret = process.env.AUTH_SECRET;
@@ -67,13 +79,14 @@ export function buildAccessibleResumeWhere(
   viewer: ResumeAccessViewer,
   resumeId?: string
 ): Prisma.ResumeWhereInput {
-  if (isAdminViewer(viewer)) {
-    return resumeId ? { id: resumeId } : {};
-  }
-
   return resumeId
-    ? { id: resumeId, userId: viewer.id }
-    : { userId: viewer.id };
+    ? {
+        id: resumeId,
+        userId: viewer.id,
+      }
+    : {
+        userId: viewer.id,
+      };
 }
 
 export async function findAccessibleResume(
@@ -102,6 +115,72 @@ export async function listAccessibleResumes(viewer: ResumeAccessViewer) {
   });
 
   return resumes.map(resolveResumePhotoPath);
+}
+
+export async function findResumeWithContentAccess(
+  viewer: ResumeAccessViewer,
+  resumeId: string,
+  options?: {
+    supportAuditAction?: AuditAction;
+    supportAuditMetadata?: Record<string, unknown>;
+  }
+): Promise<ResumeContentAccessResult | null> {
+  const ownerResume = await prisma.resume.findFirst({
+    where: buildAccessibleResumeWhere(viewer, resumeId),
+    include: accessibleResumeInclude,
+  });
+
+  if (ownerResume) {
+    return {
+      resume: resolveResumePhotoPath(ownerResume),
+      accessMode: "owner",
+      supportAccessGrantId: null,
+    };
+  }
+
+  const resume = await prisma.resume.findUnique({
+    where: {
+      id: resumeId,
+    },
+    include: accessibleResumeInclude,
+  });
+
+  if (!resume?.userId) {
+    return null;
+  }
+
+  const grant = await findActiveSupportContentGrantForActor({
+    actor: viewer,
+    targetUserId: resume.userId,
+    targetResumeId: resume.id,
+  });
+
+  if (!grant) {
+    return null;
+  }
+
+  if (options?.supportAuditAction) {
+    await writeAuditLog({
+      actor: viewer,
+      action: options.supportAuditAction,
+      targetType: AUDIT_TARGET_TYPES.RESUME,
+      targetId: resume.id,
+      targetOwnerUserId: resume.userId,
+      metadata: {
+        accessMode: "support-grant",
+        supportAccessGrantId: grant.id,
+        ...options.supportAuditMetadata,
+      },
+    }).catch((error) => {
+      console.error("Failed to write support content access audit log:", error);
+    });
+  }
+
+  return {
+    resume: resolveResumePhotoPath(resume),
+    accessMode: "support-grant",
+    supportAccessGrantId: grant.id,
+  };
 }
 
 export async function listResumeTitlesForOwner(

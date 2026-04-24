@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   createResumePrintAccessToken,
-  findAccessibleResume,
+  findResumeWithContentAccess,
 } from "@/lib/auth/resume-access";
+import { AUDIT_ACTIONS } from "@/lib/privacy/audit";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -68,12 +69,18 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  const resume = await findAccessibleResume(user, id);
+  const accessResult = await findResumeWithContentAccess(user, id, {
+    supportAuditAction: AUDIT_ACTIONS.SUPPORT_RESUME_PDF_GENERATED,
+    supportAuditMetadata: {
+      route: `/api/resumes/${id}/pdf`,
+    },
+  });
 
-  if (!resume) {
+  if (!accessResult) {
     return NextResponse.json({ error: "Resume not found" }, { status: 404 });
   }
 
+  const resume = accessResult.resume;
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
 
   try {

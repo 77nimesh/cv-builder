@@ -6,7 +6,7 @@ import {
   getResumeTemplateDefinitionForRecord,
   getResumeTemplatePrintBackgroundColor,
 } from "@/components/templates/template-registry";
-import { resolveResumeTemplateComponent } from "@/components/templates/template-renderer";
+import { renderResumeTemplate } from "@/components/templates/template-renderer";
 import { getResumePreviewShellStyle } from "@/components/templates/export-layout";
 import type {
   DraggedItemState,
@@ -54,7 +54,6 @@ export default function ResumePreview({
 }: ResumePreviewProps) {
   const activeTemplateId = getActiveResumeTemplateId(resume);
   const templateDefinition = getResumeTemplateDefinitionForRecord(resume);
-  const TemplateComponent = resolveResumeTemplateComponent(activeTemplateId);
   const printBackgroundColor = getResumeTemplatePrintBackgroundColor(
     templateDefinition.id,
     resume.data.layout.themeColor
@@ -103,7 +102,7 @@ export default function ResumePreview({
       ) : null}
 
       <div className="relative z-10 print:m-0 print:p-0">
-        <TemplateComponent {...templateProps} />
+        {renderResumeTemplate(activeTemplateId, templateProps)}
       </div>
     </div>
   );

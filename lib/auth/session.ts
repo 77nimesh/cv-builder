@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Session } from "next-auth";
 import { auth } from "@/auth";
+import { isSystemAdminRole } from "@/lib/auth/roles";
 
 export type AppSession = Session | null;
 export type AppSessionUser = NonNullable<Session["user"]>;
@@ -27,5 +28,5 @@ export async function requireCurrentUser(): Promise<AppSessionUser> {
 export function isAdminUser(
   user: Pick<AppSessionUser, "role"> | null | undefined
 ) {
-  return user?.role === "ADMIN";
+  return isSystemAdminRole(user?.role);
 }

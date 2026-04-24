@@ -71,22 +71,12 @@ export async function assertUserCanCreateResumePhotoAsset(userId: string) {
 export async function findAccessibleResumePhotoAsset(input: {
   assetId: string;
   viewerUserId: string;
-  viewerRole?: string | null;
-  resumeOwnerUserId?: string | null;
 }) {
-  const allowedOwnerIds = new Set<string>([input.viewerUserId]);
-
-  if (input.viewerRole === "ADMIN" && input.resumeOwnerUserId) {
-    allowedOwnerIds.add(input.resumeOwnerUserId);
-  }
-
   return prisma.imageAsset.findFirst({
     where: {
       id: input.assetId,
       kind: RESUME_PHOTO_ASSET_KIND,
-      userId: {
-        in: [...allowedOwnerIds],
-      },
+      userId: input.viewerUserId,
     },
   });
 }

@@ -3,10 +3,11 @@ import ResumePreview from "@/components/preview/resume-preview";
 import { normalizeResumeRecord } from "@/lib/resume/record";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
-  findAccessibleResume,
   findResumeFromPrintAccessPayload,
+  findResumeWithContentAccess,
   verifyResumePrintAccessToken,
 } from "@/lib/auth/resume-access";
+import { AUDIT_ACTIONS } from "@/lib/privacy/audit";
 
 type PrintResumePageProps = {
   params: Promise<{ id: string }>;
@@ -24,7 +25,16 @@ export default async function PrintResumePage({
 
   const user = await getCurrentUser();
 
-  let resume = user ? await findAccessibleResume(user, id) : null;
+  let resume = user
+    ? (
+        await findResumeWithContentAccess(user, id, {
+          supportAuditAction: AUDIT_ACTIONS.SUPPORT_RESUME_PRINTED,
+          supportAuditMetadata: {
+            route: `/resumes/${id}/print`,
+          },
+        })
+      )?.resume
+    : null;
 
   if (!resume) {
     const tokenPayload = verifyResumePrintAccessToken(printAccessToken);

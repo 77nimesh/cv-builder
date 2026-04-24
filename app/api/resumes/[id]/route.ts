@@ -8,12 +8,19 @@ import {
 import { toPrismaResumeData } from "@/lib/resume/prisma-json";
 import { resumeFormSchema } from "@/lib/validators";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth/session";
-import { findAccessibleResume } from "@/lib/auth/resume-access";
+import {
+  getCurrentUser,
+  type AppSessionUser,
+} from "@/lib/auth/session";
+import {
+  findAccessibleResume,
+  findResumeWithContentAccess,
+} from "@/lib/auth/resume-access";
 import {
   findAccessibleResumePhotoAsset,
   resolveImageAssetPublicUrl,
 } from "@/lib/assets/image-assets";
+import { AUDIT_ACTIONS } from "@/lib/privacy/audit";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -72,8 +79,7 @@ function readCanonicalPayloadPhotoShape(rawBody: Record<string, unknown>) {
 }
 
 async function resolvePhotoSelection(input: {
-  user: Awaited<ReturnType<typeof getCurrentUser>>;
-  resumeOwnerUserId: string | null;
+  user: AppSessionUser;
   existingPhotoPath: string | null;
   existingPhotoAssetId: string | null;
   requestedPhotoPath?: string | null;
@@ -81,7 +87,6 @@ async function resolvePhotoSelection(input: {
 }) {
   const {
     user,
-    resumeOwnerUserId,
     existingPhotoPath,
     existingPhotoAssetId,
     requestedPhotoPath,
@@ -98,9 +103,7 @@ async function resolvePhotoSelection(input: {
 
     const asset = await findAccessibleResumePhotoAsset({
       assetId: requestedPhotoAssetId,
-      viewerUserId: user?.id ?? "",
-      viewerRole: user?.role,
-      resumeOwnerUserId,
+      viewerUserId: user.id,
     });
 
     if (!asset) {
@@ -143,13 +146,18 @@ export async function GET(_: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    const resume = await findAccessibleResume(user, id);
+    const accessResult = await findResumeWithContentAccess(user, id, {
+      supportAuditAction: AUDIT_ACTIONS.SUPPORT_CONTENT_VIEWED,
+      supportAuditMetadata: {
+        route: `GET /api/resumes/${id}`,
+      },
+    });
 
-    if (!resume) {
+    if (!accessResult) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
-    return NextResponse.json(normalizeResumeRecord(resume));
+    return NextResponse.json(normalizeResumeRecord(accessResult.resume));
   } catch (error) {
     console.error("Failed to fetch resume:", error);
     return NextResponse.json(
@@ -254,7 +262,6 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const resolvedPhotoSelection = await resolvePhotoSelection({
       user,
-      resumeOwnerUserId: existingResumeRaw.userId ?? null,
       existingPhotoPath: existingResume.photoPath,
       existingPhotoAssetId: existingResume.photoAssetId,
       requestedPhotoPath,
@@ -289,7 +296,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       { error: "Failed to update resume" },
       { status: 500 }
     );
-  }
+  } 
 }
 
 export async function DELETE(_: NextRequest, context: RouteContext) {

@@ -14,36 +14,46 @@ datasource db {
 }
 
 model User {
-  id                      String                   @id @default(cuid())
-  name                    String?
-  email                   String                   @unique
-  passwordHash            String
-  role                    String                   @default("USER")
-  emailVerified           DateTime?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  resumes                 Resume[]
-  imageAssets             ImageAsset[]
-  emailVerificationTokens EmailVerificationToken[]
-  passwordResetTokens     PasswordResetToken[]
+  id                                String                   @id @default(cuid())
+  name                              String?
+  email                             String                   @unique
+  passwordHash                      String
+  role                              String                   @default("USER")
+  emailVerified                     DateTime?
+  createdAt                         DateTime                 @default(now())
+  updatedAt                         DateTime                 @updatedAt
+  resumes                           Resume[]
+  imageAssets                       ImageAsset[]
+  emailVerificationTokens           EmailVerificationToken[]
+  passwordResetTokens               PasswordResetToken[]
+  supportAccessGrantsForUser        SupportAccessGrant[]     @relation("SupportAccessGrantTargetUser")
+  supportAccessGrantsAsSupportUser  SupportAccessGrant[]     @relation("SupportAccessGrantSupportUser")
+  supportAccessGrantsGrantedByUser  SupportAccessGrant[]     @relation("SupportAccessGrantGrantedByUser")
+  auditLogsAuthored                 AuditLog[]               @relation("AuditLogActorUser")
+  auditLogsForOwnedTargets          AuditLog[]               @relation("AuditLogTargetOwnerUser")
+  privacyRequestsForSubjectUser     PrivacyRequest[]         @relation("PrivacyRequestSubjectUser")
+  privacyRequestsRequestedByUser    PrivacyRequest[]         @relation("PrivacyRequestRequestedByUser")
+  privacyRequestsAssignedToUser     PrivacyRequest[]         @relation("PrivacyRequestAssignedToUser")
+  privacyRequestsResolvedByUser     PrivacyRequest[]         @relation("PrivacyRequestResolvedByUser")
 
   @@index([role])
 }
 
 model Resume {
-  id           String      @id @default(cuid())
-  userId       String?
-  title        String
-  template     String      @default("modern-1")
-  themeColor   String?
-  fontFamily   String?
-  data         Json
-  photoPath    String?
-  photoAssetId String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  photoAsset   ImageAsset? @relation(fields: [photoAssetId], references: [id], onDelete: SetNull)
+  id                  String                @id @default(cuid())
+  userId              String?
+  title               String
+  template            String                @default("modern-1")
+  themeColor          String?
+  fontFamily          String?
+  data                Json
+  photoPath           String?
+  photoAssetId        String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  user                User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  photoAsset          ImageAsset?           @relation(fields: [photoAssetId], references: [id], onDelete: SetNull)
+  supportAccessGrants SupportAccessGrant[]
 
   @@index([userId])
   @@index([photoAssetId])
@@ -67,6 +77,84 @@ model ImageAsset {
 
   @@index([userId, createdAt])
   @@index([userId, kind])
+}
+
+model SupportAccessGrant {
+  id              String    @id @default(cuid())
+  targetUserId    String
+  targetResumeId  String?
+  supportUserId   String
+  grantedByUserId String?
+  reason          String
+  startsAt        DateTime  @default(now())
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  targetUser    User    @relation("SupportAccessGrantTargetUser", fields: [targetUserId], references: [id], onDelete: Cascade)
+  targetResume  Resume? @relation(fields: [targetResumeId], references: [id], onDelete: Cascade)
+  supportUser   User    @relation("SupportAccessGrantSupportUser", fields: [supportUserId], references: [id], onDelete: Cascade)
+  grantedByUser User?   @relation("SupportAccessGrantGrantedByUser", fields: [grantedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([targetUserId])
+  @@index([targetResumeId])
+  @@index([supportUserId])
+  @@index([grantedByUserId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+model AuditLog {
+  id                String   @id @default(cuid())
+  actorUserId       String?
+  actorRole         String?
+  action            String
+  targetType        String
+  targetId          String?
+  targetOwnerUserId String?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+
+  actorUser       User? @relation("AuditLogActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
+  targetOwnerUser User? @relation("AuditLogTargetOwnerUser", fields: [targetOwnerUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId])
+  @@index([targetOwnerUserId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+model PrivacyRequest {
+  id               String    @id @default(cuid())
+  type             String
+  status           String    @default("OPEN")
+  subjectUserId    String
+  requestedByUserId String?
+  assignedToUserId String?
+  resolvedByUserId String?
+  reason           String?
+  requestDetails   Json?
+  resolutionNotes  String?
+  requestedAt      DateTime  @default(now())
+  dueAt            DateTime?
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  subjectUser     User  @relation("PrivacyRequestSubjectUser", fields: [subjectUserId], references: [id], onDelete: Cascade)
+  requestedByUser User? @relation("PrivacyRequestRequestedByUser", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  assignedToUser  User? @relation("PrivacyRequestAssignedToUser", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  resolvedByUser  User? @relation("PrivacyRequestResolvedByUser", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([type, status])
+  @@index([subjectUserId])
+  @@index([requestedByUserId])
+  @@index([assignedToUserId])
+  @@index([resolvedByUserId])
+  @@index([dueAt])
+  @@index([createdAt])
 }
 
 model EmailVerificationToken {

@@ -2,6 +2,7 @@ import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail, verifyPassword } from "@/lib/auth/password";
+import { DEFAULT_APP_ROLE, normalizeAppRole } from "@/lib/auth/roles";
 
 const authConfig = {
   session: {
@@ -58,7 +59,7 @@ const authConfig = {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: normalizeAppRole(user.role),
           emailVerified: user.emailVerified,
         };
       },
@@ -92,7 +93,7 @@ const authConfig = {
 
       token.name = dbUser.name ?? token.name;
       token.email = dbUser.email ?? token.email;
-      token.role = dbUser.role;
+      token.role = normalizeAppRole(dbUser.role);
       token.emailVerifiedAt = dbUser.emailVerified
         ? dbUser.emailVerified.toISOString()
         : null;
@@ -105,7 +106,9 @@ const authConfig = {
       if (session.user) {
         session.user.id = typeof token.sub === "string" ? token.sub : "";
         session.user.role =
-          typeof token.role === "string" ? token.role : "USER";
+          typeof token.role === "string"
+            ? normalizeAppRole(token.role)
+            : DEFAULT_APP_ROLE;
         session.user.emailVerifiedAt =
           typeof token.emailVerifiedAt === "string"
             ? token.emailVerifiedAt

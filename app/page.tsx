@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LogoutButton from "@/components/auth/logout-button";
 import { getCurrentUser } from "@/lib/auth/session";
+import { APP_ROLES, AppRole } from "@/lib/auth/roles";
 
 function readDisplayName(user: Awaited<ReturnType<typeof getCurrentUser>>) {
   if (!user) {
@@ -19,6 +20,16 @@ function readDisplayName(user: Awaited<ReturnType<typeof getCurrentUser>>) {
 export default async function HomePage() {
   const user = await getCurrentUser();
   const displayName = readDisplayName(user);
+
+  const ADMIN_ROLES: readonly AppRole[] = [
+    APP_ROLES.SUPPORT_METADATA,
+    APP_ROLES.ADMIN_SYSTEM,
+    APP_ROLES.PRIVACY_ADMIN,
+    APP_ROLES.SUPPORT_CONTENT_ACCESS,
+  ];
+
+  const canAccessAdmin = !!user && ADMIN_ROLES.includes(user.role);
+
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -41,6 +52,14 @@ export default async function HomePage() {
           <div className="flex items-center gap-3">
             {user ? (
               <>
+                {canAccessAdmin ? (
+                  <Link
+                    href="/admin/support-access"
+                    className="rounded-xl border border-slate-300 px-4 py-2"
+                  >
+                    Admin
+                  </Link>
+                ) : null}
                 <Link
                   href="/account"
                   className="rounded-xl border border-slate-300 px-4 py-2"

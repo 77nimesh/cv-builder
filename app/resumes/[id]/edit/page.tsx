@@ -4,7 +4,7 @@ import ResumeForm from "@/components/forms/resume-form";
 import DuplicateResumeButton from "@/components/actions/duplicate-resume-button";
 import LogoutButton from "@/components/auth/logout-button";
 import { normalizeResumeRecord } from "@/lib/resume/record";
-import { isAdminUser, requireCurrentUser } from "@/lib/auth/session";
+import { requireCurrentUser } from "@/lib/auth/session";
 import { findAccessibleResume } from "@/lib/auth/resume-access";
 
 type EditResumePageProps = {
@@ -23,9 +23,6 @@ export default async function EditResumePage({
     notFound();
   }
 
-  const adminOverrideActive =
-    isAdminUser(user) && resume.userId !== null && resume.userId !== user.id;
-
   const normalizedResume = normalizeResumeRecord(resume);
   const formRenderKey = `${normalizedResume.id}-${new Date(
     normalizedResume.updatedAt
@@ -43,15 +40,12 @@ export default async function EditResumePage({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            
             <Link
               href="/resumes"
               className="rounded-xl border border-slate-300 bg-white px-4 py-3"
             >
               Resumes
             </Link>
-
-            
 
             <DuplicateResumeButton
               resumeId={normalizedResume.id}
@@ -66,18 +60,8 @@ export default async function EditResumePage({
             </Link>
 
             <LogoutButton className="rounded-xl border border-slate-300 bg-white px-4 py-3" />
-
           </div>
         </div>
-
-        {adminOverrideActive ? (
-          <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900">
-            <p className="font-medium">Admin access override is active.</p>
-            <p className="mt-1 text-sm">
-              You are editing a resume that belongs to another user.
-            </p>
-          </div>
-        ) : null}
 
         <ResumeForm key={formRenderKey} resume={normalizedResume} />
       </div>

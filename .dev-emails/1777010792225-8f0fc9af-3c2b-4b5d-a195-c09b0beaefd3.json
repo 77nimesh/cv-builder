@@ -1,0 +1,10 @@
+{
+  "id": "1777010792225-8f0fc9af-3c2b-4b5d-a195-c09b0beaefd3",
+  "to": "nimesh.gamage@outlook.com.au",
+  "subject": "Verify your CV Builder email address",
+  "text": "Hi Support Access,\n\nPlease verify your email address for CV Builder by opening the link below:\nhttp://localhost:3000/verify-email?token=MQmpZ_rDks-oA5W7CGfS8GpyS28TRUB07bAZf5fSc30\n\nIf you did not create this account, you can ignore this email.",
+  "html": "\n      <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;\">\n        <p>Hi Support Access,</p>\n        <p>Please verify your email address for <strong>CV Builder</strong> by clicking the button below.</p>\n        <p>\n          <a\n            href=\"http://localhost:3000/verify-email?token=MQmpZ_rDks-oA5W7CGfS8GpyS28TRUB07bAZf5fSc30\"\n            style=\"display:inline-block;padding:12px 18px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:12px;\"\n          >\n            Verify Email\n          </a>\n        </p>\n        <p>If the button does not work, copy and paste this URL into your browser:</p>\n        <p><a href=\"http://localhost:3000/verify-email?token=MQmpZ_rDks-oA5W7CGfS8GpyS28TRUB07bAZf5fSc30\">http://localhost:3000/verify-email?token=MQmpZ_rDks-oA5W7CGfS8GpyS28TRUB07bAZf5fSc30</a></p>\n        <p>If you did not create this account, you can ignore this email.</p>\n      </div>\n    ",
+  "purpose": "verify-email",
+  "createdAt": "2026-04-24T06:06:32.226Z",
+  "previewUrl": "http://localhost:3000/dev/emails/1777010792225-8f0fc9af-3c2b-4b5d-a195-c09b0beaefd3"
+}

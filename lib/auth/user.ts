@@ -4,6 +4,7 @@ import {
   normalizeEmail,
   verifyPassword,
 } from "@/lib/auth/password";
+import { APP_ROLES } from "@/lib/auth/roles";
 
 type CreateUserInput = {
   name?: string;
@@ -39,7 +40,7 @@ export async function createUser(input: CreateUserInput) {
       name: normalizeDisplayName(input.name),
       email: normalizeEmail(input.email),
       passwordHash: await hashPassword(input.password),
-      role: "USER",
+      role: APP_ROLES.USER,
       emailVerified: null,
     },
   });
