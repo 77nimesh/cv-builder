@@ -8,6 +8,10 @@ import {
   findAccessibleResume,
   listResumeTitlesForOwner,
 } from "@/lib/auth/resume-access";
+import {
+  assertCanUseResumeTemplate,
+  TemplateAccessError,
+} from "@/lib/billing/template-access";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -72,7 +76,13 @@ export async function POST(_: Request, context: RouteContext) {
     const sourceResume = normalizeResumeRecord(sourceResumeRaw);
     const existingTitles = await listResumeTitlesForOwner(user.id);
 
-    const template = readActiveTemplate(sourceResume);
+    const requestedTemplate = readActiveTemplate(sourceResume);
+    const templateAccess = await assertCanUseResumeTemplate({
+      userId: user.id,
+      resumeId: sourceResume.id,
+      template: requestedTemplate,
+    });
+    const template = templateAccess.templateId;
     const themeColor = readSyncedThemeColor(sourceResume);
     const fontFamily = readSyncedFontFamily(sourceResume);
 
@@ -104,6 +114,17 @@ export async function POST(_: Request, context: RouteContext) {
     });
   } catch (error) {
     console.error("Failed to duplicate resume:", error);
+
+    if (error instanceof TemplateAccessError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: error.code,
+        },
+        { status: error.status }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to duplicate resume" },
       { status: 500 }

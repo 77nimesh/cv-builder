@@ -8,6 +8,11 @@ import {
   verifyResumePrintAccessToken,
 } from "@/lib/auth/resume-access";
 import { AUDIT_ACTIONS } from "@/lib/privacy/audit";
+import {
+  consumeResumeExportDownload,
+  getResumeExportAccess,
+  type ResumeExportAccess,
+} from "@/lib/billing/export-access";
 
 type PrintResumePageProps = {
   params: Promise<{ id: string }>;
@@ -23,29 +28,49 @@ export default async function PrintResumePage({
   const { id } = await params;
   const { printAccessToken } = await searchParams;
 
-  const user = await getCurrentUser();
+  let resume = null;
+  let ownerPrintExportAccess: ResumeExportAccess | null = null;
 
-  let resume = user
-    ? (
-        await findResumeWithContentAccess(user, id, {
+  const tokenPayload = verifyResumePrintAccessToken(printAccessToken);
+
+  if (tokenPayload && tokenPayload.resumeId === id) {
+    resume = await findResumeFromPrintAccessPayload(tokenPayload);
+  }
+
+  if (!resume) {
+    const user = await getCurrentUser();
+
+    const accessResult = user
+      ? await findResumeWithContentAccess(user, id, {
           supportAuditAction: AUDIT_ACTIONS.SUPPORT_RESUME_PRINTED,
           supportAuditMetadata: {
             route: `/resumes/${id}/print`,
           },
         })
-      )?.resume
-    : null;
+      : null;
 
-  if (!resume) {
-    const tokenPayload = verifyResumePrintAccessToken(printAccessToken);
+    if (accessResult?.accessMode === "owner" && user) {
+      const exportAccess = await getResumeExportAccess({
+        userId: user.id,
+        resumeId: id,
+      });
 
-    if (tokenPayload && tokenPayload.resumeId === id) {
-      resume = await findResumeFromPrintAccessPayload(tokenPayload);
+      if (!exportAccess.canExport) {
+        notFound();
+      }
+
+      ownerPrintExportAccess = exportAccess;
     }
+
+    resume = accessResult?.resume ?? null;
   }
 
   if (!resume) {
     notFound();
+  }
+
+  if (ownerPrintExportAccess) {
+    await consumeResumeExportDownload(ownerPrintExportAccess);
   }
 
   const normalizedResume = normalizeResumeRecord(resume);

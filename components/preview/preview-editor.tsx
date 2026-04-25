@@ -8,6 +8,10 @@ import {
   ThemeColorDropdown,
 } from "@/components/forms/design-dropdowns";
 import TemplateDropdown from "@/components/forms/template-dropdown";
+import {
+  AVAILABLE_RESUME_TEMPLATE_IDS,
+  isAvailableResumeTemplateId,
+} from "@/components/templates/template-registry";
 import type {
   ResumeRecord,
   ResumeSection,
@@ -21,6 +25,7 @@ import {
 
 type PreviewEditorProps = {
   resume: ResumeRecord;
+  templateLimit?: number;
 };
 
 type DraggedItemState = {
@@ -171,7 +176,21 @@ function moveItemToEnd(items: ResumeSectionItem[], draggedItemId: string) {
   return reindexItems(withoutDragged);
 }
 
-export default function PreviewEditor({ resume }: PreviewEditorProps) {
+function getTemplateEntitlementRank(templateId: string) {
+  if (!isAvailableResumeTemplateId(templateId)) {
+    return null;
+  }
+
+  const index = AVAILABLE_RESUME_TEMPLATE_IDS.indexOf(templateId);
+
+  if (index < 0) {
+    return null;
+  }
+
+  return index + 1;
+}
+
+export default function PreviewEditor({ resume, templateLimit }: PreviewEditorProps) {
   const router = useRouter();
   const [draftResume, setDraftResume] = useState<ResumeRecord>(
     normalizeResumeRecord(resume)
@@ -218,7 +237,30 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save resume");
+        let serverMessage = "Failed to save resume";
+
+        try {
+          const body = (await response.json()) as unknown;
+          if (
+            body &&
+            typeof body === "object" &&
+            "error" in body &&
+            typeof (body as { error?: unknown }).error === "string"
+          ) {
+            serverMessage = (body as { error: string }).error;
+          }
+        } catch {
+          try {
+            const text = await response.text();
+            if (text.trim().length > 0) {
+              serverMessage = text;
+            }
+          } catch {
+            // Ignore.
+          }
+        }
+
+        throw new Error(serverMessage);
       }
 
       const savedResume = normalizeResumeRecord(
@@ -231,7 +273,11 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
     } catch (error) {
       console.error(error);
       setDraftResume(previousResume);
-      setMessage("Failed to save changes.");
+      setMessage(
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : "Failed to save changes."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -345,6 +391,16 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
       return;
     }
 
+    if (typeof templateLimit === "number" && templateLimit > 0) {
+      const rank = getTemplateEntitlementRank(nextTemplate);
+      if (rank !== null && rank > templateLimit) {
+        setMessage(
+          `Template locked for your current plan. Your access allows ${templateLimit} templates.`
+        );
+        return;
+      }
+    }
+
     setDraggedSectionId(null);
     setDropTargetSectionId(null);
     setDraggedItem(null);
@@ -399,7 +455,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
 
   return (
     <div className="space-y-4">
-      <div className="sticky top-32 z-20 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+      <div className="static top-32 z-20 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
         <p>
           Drag sections with the section handle. Drag items with the item handle
           inside Experience, Education, Projects, Certifications, and Custom
@@ -418,6 +474,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
                 Template
               </label>
               <TemplateDropdown
+                resumeId={draftResume.id}
                 value={draftResume.template}
                 onChange={(event) => void handleTemplateChange(event.target.value)}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none"
@@ -499,8 +556,8 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
           </div>
         </div>
 
-        <div className="hidden w-80 shrink-0 print:hidden lg:block">
-          <div className="fixed z-10 w-80 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+        <div className="hidden w-80 shrink-0 print:hidden lg:sticky lg:top-4 lg:z-30 lg:block">
+          <div className="w-80 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
             <h2 className="text-base font-semibold text-slate-900">Design</h2>
             <p className="mt-1 text-xs text-slate-500">
               Template, theme, and font apply instantly.
@@ -514,6 +571,7 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
                 <TemplateDropdown
                   value={draftResume.template}
                   onChange={(event) => void handleTemplateChange(event.target.value)}
+                  templateLimit={templateLimit}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none"
                 />
               </div>

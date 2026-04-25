@@ -432,6 +432,7 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
             <label className="mb-2 block text-sm font-medium">Template</label>
             <TemplateDropdown
               {...register("template")}
+              resumeId={resume.id}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
             />
           </div>

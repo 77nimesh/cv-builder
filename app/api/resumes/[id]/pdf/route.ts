@@ -6,6 +6,17 @@ import {
   findResumeWithContentAccess,
 } from "@/lib/auth/resume-access";
 import { AUDIT_ACTIONS } from "@/lib/privacy/audit";
+import {
+  assertCanExportResume,
+  consumeResumeExportDownload,
+  ExportAccessError,
+  type ResumeExportAccess,
+} from "@/lib/billing/export-access";
+import {
+  isBillingAdminRole,
+  isPrivacyAdminRole,
+  isSystemAdminRole,
+} from "@/lib/auth/roles";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -80,6 +91,38 @@ export async function GET(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Resume not found" }, { status: 404 });
   }
 
+  let exportAccess: ResumeExportAccess | null = null;
+
+  if (accessResult.accessMode === "owner") {
+    const isAdminOwner =
+      isSystemAdminRole(user.role) ||
+      isBillingAdminRole(user.role) ||
+      isPrivacyAdminRole(user.role);
+
+    if (isAdminOwner) {
+      exportAccess = null;
+    } else {
+    try {
+      exportAccess = await assertCanExportResume({
+        userId: user.id,
+        resumeId: id,
+      });
+    } catch (error) {
+      if (error instanceof ExportAccessError) {
+        return NextResponse.json(
+          {
+            error: error.message,
+            code: error.code,
+          },
+          { status: error.status }
+        );
+      }
+
+      throw error;
+    }
+    }
+  }
+
   const resume = accessResult.resume;
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
 
@@ -113,6 +156,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
       })
     );
 
+    if (exportAccess) {
+      await consumeResumeExportDownload(exportAccess);
+    }
+
     return new Response(pdfBytes, {
       headers: {
         "Content-Type": "application/pdf",
@@ -122,6 +169,22 @@ export async function GET(req: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error("Failed to generate PDF:", error);
+
+    if (error instanceof ExportAccessError) {
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+          code: error.code,
+        }),
+        {
+          status: error.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+          },
+        }
+      );
+    }
 
     return new Response(JSON.stringify({ error: "Failed to generate PDF" }), {
       status: 500,

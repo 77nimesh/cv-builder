@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { ResumePhotoShape } from "@/lib/types";
+import type { ResumeData, ResumePhotoShape } from "@/lib/types";
 import { buildResumeDataFromFormData } from "@/lib/resume/normalizers";
 import {
   buildResumeUpdatePayload,
@@ -21,6 +21,17 @@ import {
   resolveImageAssetPublicUrl,
 } from "@/lib/assets/image-assets";
 import { AUDIT_ACTIONS } from "@/lib/privacy/audit";
+import {
+  assertCanUseResumeTemplate,
+  normalizeTemplateIdForAccess,
+  TEMPLATE_ACCESS_ERROR_CODES,
+  TemplateAccessError,
+} from "@/lib/billing/template-access";
+import {
+  isBillingAdminRole,
+  isPrivacyAdminRole,
+  isSystemAdminRole,
+} from "@/lib/auth/roles";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -76,6 +87,23 @@ function readCanonicalPayloadPhotoShape(rawBody: Record<string, unknown>) {
 
   const layout = (data as { layout?: { photoShape?: unknown } }).layout;
   return readPhotoShape(layout?.photoShape);
+}
+
+function syncPayloadTemplate(
+  payload: ReturnType<typeof buildResumeUpdatePayload>,
+  template: string
+): ReturnType<typeof buildResumeUpdatePayload> {
+  return {
+    ...payload,
+    template,
+    data: {
+      ...payload.data,
+      layout: {
+        ...payload.data.layout,
+        template,
+      },
+    } satisfies ResumeData,
+  };
 }
 
 async function resolvePhotoSelection(input: {
@@ -260,6 +288,35 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       });
     }
 
+    const isAdminOwner =
+      isSystemAdminRole(user.role) ||
+      isBillingAdminRole(user.role) ||
+      isPrivacyAdminRole(user.role);
+
+    if (isAdminOwner) {
+      const templateId = normalizeTemplateIdForAccess(payload.template);
+
+      if (!templateId) {
+        return NextResponse.json(
+          {
+            error: "The selected template is not available.",
+            code: TEMPLATE_ACCESS_ERROR_CODES.INVALID_TEMPLATE,
+          },
+          { status: 400 }
+        );
+      }
+
+      payload = syncPayloadTemplate(payload, templateId);
+    } else {
+      const templateAccess = await assertCanUseResumeTemplate({
+        userId: user.id,
+        resumeId: existingResume.id,
+        template: payload.template,
+      });
+
+      payload = syncPayloadTemplate(payload, templateAccess.templateId);
+    }
+
     const resolvedPhotoSelection = await resolvePhotoSelection({
       user,
       existingPhotoPath: existingResume.photoPath,
@@ -285,6 +342,16 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   } catch (error) {
     console.error("Failed to update resume:", error);
 
+    if (error instanceof TemplateAccessError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: error.code,
+        },
+        { status: error.status }
+      );
+    }
+
     if (
       error instanceof Error &&
       error.message === "Selected photo was not found or is not accessible."
@@ -294,36 +361,6 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json(
       { error: "Failed to update resume" },
-      { status: 500 }
-    );
-  } 
-}
-
-export async function DELETE(_: NextRequest, context: RouteContext) {
-  try {
-    const user = await getCurrentUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { id } = await context.params;
-
-    const resume = await findAccessibleResume(user, id);
-
-    if (!resume) {
-      return NextResponse.json({ error: "Resume not found" }, { status: 404 });
-    }
-
-    await prisma.resume.delete({
-      where: { id: resume.id },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Failed to delete resume:", error);
-    return NextResponse.json(
-      { error: "Failed to delete resume" },
       { status: 500 }
     );
   }

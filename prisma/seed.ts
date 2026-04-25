@@ -1,10 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 import { APP_ROLES, LEGACY_ADMIN_ROLE } from "@/lib/auth/roles";
 import { hashPassword, normalizeEmail } from "@/lib/auth/password";
+import { BILLING_PLAN_CATALOG } from "@/lib/billing/plans";
 
 const prisma = new PrismaClient();
 
-async function main() {
+function cloneJson(value: Record<string, unknown>) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+async function seedSystemAdmin() {
   const adminEmail = normalizeEmail(
     process.env.ADMIN_SEED_EMAIL ?? "77nimesh@gmail.com"
   );
@@ -60,11 +65,71 @@ async function main() {
     data: { userId: admin.id },
   });
 
+  return {
+    admin,
+    adoptedResumeCount: adoptedResumes.count,
+  };
+}
+
+async function seedBillingPlans() {
+  const seededPlanSummaries: string[] = [];
+
+  for (const plan of BILLING_PLAN_CATALOG) {
+    const metadata = cloneJson(plan.metadata);
+
+    const seededPlan = await prisma.plan.upsert({
+      where: { code: plan.code },
+      update: {
+        name: plan.name,
+        description: plan.description,
+        status: plan.status,
+        billingMode: plan.billingMode,
+        currency: plan.currency,
+        amountCents: plan.amountCents,
+        templateLimit: plan.templateLimit,
+        exportEnabled: plan.exportEnabled,
+        exportResumeScoped: plan.exportResumeScoped,
+        downloadLimit: plan.downloadLimit,
+        entitlementDurationDays: plan.entitlementDurationDays,
+        isPublic: plan.isPublic,
+        sortOrder: plan.sortOrder,
+        metadata,
+      },
+      create: {
+        code: plan.code,
+        name: plan.name,
+        description: plan.description,
+        status: plan.status,
+        billingMode: plan.billingMode,
+        currency: plan.currency,
+        amountCents: plan.amountCents,
+        templateLimit: plan.templateLimit,
+        exportEnabled: plan.exportEnabled,
+        exportResumeScoped: plan.exportResumeScoped,
+        downloadLimit: plan.downloadLimit,
+        entitlementDurationDays: plan.entitlementDurationDays,
+        isPublic: plan.isPublic,
+        sortOrder: plan.sortOrder,
+        metadata,
+      },
+    });
+
+    seededPlanSummaries.push(`${seededPlan.code} (${seededPlan.status})`);
+  }
+
+  return seededPlanSummaries;
+}
+
+async function main() {
+  const { admin, adoptedResumeCount } = await seedSystemAdmin();
+  const seededPlanSummaries = await seedBillingPlans();
+
   console.log(
     [
       `Seeded system admin user: ${admin.email}`,
       `Admin role: ${admin.role}`,
-      `Claimed orphan resumes: ${adoptedResumes.count}`,
+      `Claimed orphan resumes: ${adoptedResumeCount}`,
+      `Seeded billing plans: ${seededPlanSummaries.join(", ")}`,
       "If you want a custom initial admin password, set ADMIN_SEED_PASSWORD before running the seed.",
     ].join("\n")
   );

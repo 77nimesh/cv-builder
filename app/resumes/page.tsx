@@ -4,6 +4,11 @@ import DuplicateResumeButton from "@/components/actions/duplicate-resume-button"
 import DeleteResumeButton from "@/components/actions/delete-resume-button";
 import LogoutButton from "@/components/auth/logout-button";
 import { requireCurrentUser } from "@/lib/auth/session";
+import { getResumeExportAccess } from "@/lib/billing/export-access";
+
+type ResumesPageProps = {
+  searchParams: Promise<{ payment?: string }>;
+};
 
 function readDisplayName(name: string | null, email: string | null | undefined) {
   const trimmedName = name?.trim();
@@ -15,8 +20,48 @@ function readDisplayName(name: string | null, email: string | null | undefined) 
   return email ?? "your account";
 }
 
-export default async function ResumesPage() {
+function renderPaymentBanner(paymentStatus: string | undefined) {
+  if (!paymentStatus) {
+    return null;
+  }
+
+  if (paymentStatus === "success") {
+    return (
+      <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
+        <p className="font-medium">Payment confirmed.</p>
+        <p className="mt-1 text-sm">
+          Your entitlement is active. Open the purchased resume preview to
+          download the PDF.
+        </p>
+      </div>
+    );
+  }
+
+  if (paymentStatus === "cancelled") {
+    return (
+      <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+        <p className="font-medium">Payment cancelled.</p>
+        <p className="mt-1 text-sm">
+          No entitlement was created. You can restart checkout from a resume
+          preview.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
+      <p className="font-medium">Payment was not completed.</p>
+      <p className="mt-1 text-sm">
+        Status: {paymentStatus}. Try again from the resume preview page.
+      </p>
+    </div>
+  );
+}
+
+export default async function ResumesPage({ searchParams }: ResumesPageProps) {
   const user = await requireCurrentUser();
+  const { payment } = await searchParams;
 
   const resumes = await prisma.resume.findMany({
     where: {
@@ -24,6 +69,22 @@ export default async function ResumesPage() {
     },
     orderBy: { updatedAt: "desc" },
   });
+
+  const exportAccessByResumeId = new Map<
+    string,
+    Awaited<ReturnType<typeof getResumeExportAccess>>
+  >();
+
+  for (const resume of resumes) {
+    exportAccessByResumeId.set(
+      resume.id,
+      await getResumeExportAccess({
+        userId: user.id,
+        userRole: user.role,
+        resumeId: resume.id,
+      })
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -54,6 +115,13 @@ export default async function ResumesPage() {
               Account
             </Link>
 
+            <Link
+              href="/billing"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+            >
+              Billing
+            </Link>
+
             <LogoutButton className="rounded-xl border border-slate-300 bg-white px-4 py-3" />
 
             <Link
@@ -64,6 +132,8 @@ export default async function ResumesPage() {
             </Link>
           </div>
         </div>
+
+        {renderPaymentBanner(payment)}
 
         {!user.isEmailVerified ? (
           <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
@@ -91,43 +161,68 @@ export default async function ResumesPage() {
               </p>
             </div>
           ) : (
-            resumes.map((resume) => (
-              <div
-                key={resume.id}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-xl font-semibold">{resume.title}</h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Template: {resume.template}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Updated: {new Date(resume.updatedAt).toLocaleString()}
-                    </p>
-                  </div>
+            resumes.map((resume) => {
+              const exportAccess = exportAccessByResumeId.get(resume.id);
 
-                  <div className="flex items-center gap-3">
-                    <DuplicateResumeButton
-                      resumeId={resume.id}
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-2"
-                    />
+              return (
+                <div
+                  key={resume.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold">{resume.title}</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Template: {resume.template}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Updated: {new Date(resume.updatedAt).toLocaleString()}
+                      </p>
+                      <p className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                        {exportAccess?.canExport
+                          ? "Export unlocked"
+                          : "Export locked"}
+                      </p>
+                    </div>
 
-                    <DeleteResumeButton
-                      resumeId={resume.id}
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-red-600"
-                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <DuplicateResumeButton
+                        resumeId={resume.id}
+                        className="rounded-xl border border-slate-300 bg-white px-4 py-2"
+                      />
 
-                    <Link
-                      href={`/resumes/${resume.id}/edit`}
-                      className="rounded-xl border border-slate-300 px-4 py-2"
-                    >
-                      Edit
-                    </Link>
+                      <DeleteResumeButton
+                        resumeId={resume.id}
+                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-red-600"
+                      />
+
+                      <Link
+                        href={`/billing?resumeId=${encodeURIComponent(
+                          resume.id
+                        )}`}
+                        className="rounded-xl border border-slate-300 px-4 py-2"
+                      >
+                        Billing
+                      </Link>
+
+                      <Link
+                        href={`/resumes/${resume.id}/edit`}
+                        className="rounded-xl border border-slate-300 px-4 py-2"
+                      >
+                        Edit
+                      </Link>
+
+                      <Link
+                        href={`/resumes/${resume.id}/preview`}
+                        className="rounded-xl bg-slate-900 px-4 py-2 text-white"
+                      >
+                        Preview
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

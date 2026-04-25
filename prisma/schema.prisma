@@ -36,6 +36,9 @@ model User {
   privacyRequestsRequestedByUser    PrivacyRequest[]         @relation("PrivacyRequestRequestedByUser")
   privacyRequestsAssignedToUser     PrivacyRequest[]         @relation("PrivacyRequestAssignedToUser")
   privacyRequestsResolvedByUser     PrivacyRequest[]         @relation("PrivacyRequestResolvedByUser")
+  payments                          Payment[]
+  entitlements                      Entitlement[]
+  paymentReceipts                   PaymentReceipt[]
 
   @@index([role])
 }
@@ -55,6 +58,8 @@ model Resume {
   user                User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
   photoAsset          ImageAsset?           @relation(fields: [photoAssetId], references: [id], onDelete: SetNull)
   supportAccessGrants SupportAccessGrant[]
+  payments            Payment[]
+  entitlements        Entitlement[]
 
   @@index([userId])
   @@index([photoAssetId])
@@ -78,6 +83,128 @@ model ImageAsset {
 
   @@index([userId, createdAt])
   @@index([userId, kind])
+}
+
+model Plan {
+  id                      String        @id @default(cuid())
+  code                    String        @unique
+  name                    String
+  description             String
+  status                  String        @default("active")
+  billingMode             String        @default("free")
+  currency                String        @default("USD")
+  amountCents             Int           @default(0)
+  templateLimit           Int           @default(2)
+  exportEnabled           Boolean       @default(false)
+  exportResumeScoped      Boolean       @default(false)
+  downloadLimit           Int?
+  entitlementDurationDays Int?
+  isPublic                Boolean       @default(true)
+  sortOrder               Int           @default(0)
+  metadata                Json?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  payments                Payment[]
+  entitlements            Entitlement[]
+
+  @@index([status, isPublic])
+  @@index([billingMode])
+  @@index([sortOrder])
+}
+
+model Payment {
+  id                     String           @id @default(cuid())
+  userId                 String
+  planId                 String
+  resumeId               String?
+  provider               String           @default("paypal")
+  providerEnvironment    String           @default("sandbox")
+  providerOrderId        String?          @unique
+  providerCaptureId      String?          @unique
+  providerPayerId        String?
+  status                 String           @default("created")
+  amountCents            Int
+  currency               String           @default("USD")
+  rawProviderStatus      String?
+  approvalUrl            String?
+  idempotencyKey         String?          @unique
+  webhookEventId         String?          @unique
+  providerOrderPayload   Json?
+  providerCapturePayload Json?
+  metadata               Json?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  approvedAt             DateTime?
+  capturedAt             DateTime?
+  cancelledAt            DateTime?
+  failedAt               DateTime?
+  user                   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                   Plan             @relation(fields: [planId], references: [id])
+  resume                 Resume?          @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  entitlements           Entitlement[]
+  receipt                PaymentReceipt?
+
+  @@index([userId, createdAt])
+  @@index([planId])
+  @@index([resumeId])
+  @@index([provider, providerEnvironment])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Entitlement {
+  id                 String    @id @default(cuid())
+  userId             String
+  planId             String?
+  paymentId          String?
+  resumeId           String?
+  status             String    @default("active")
+  source             String    @default("payment")
+  templateLimit      Int       @default(2)
+  exportEnabled      Boolean   @default(false)
+  exportResumeScoped Boolean   @default(false)
+  downloadLimit      Int?
+  downloadsUsed      Int       @default(0)
+  startsAt           DateTime  @default(now())
+  expiresAt          DateTime?
+  revokedAt          DateTime?
+  metadata           Json?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan               Plan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
+  payment            Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  resume             Resume?   @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([userId, resumeId])
+  @@index([planId])
+  @@index([paymentId])
+  @@index([resumeId])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model PaymentReceipt {
+  id                 String    @id @default(cuid())
+  paymentId          String    @unique
+  userId             String
+  receiptNumber      String    @unique
+  status             String    @default("pending")
+  emailTo            String
+  subject            String
+  devEmailPreviewId  String?
+  devEmailPreviewUrl String?
+  sentAt             DateTime?
+  metadata           Json?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  payment            Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model SupportAccessGrant {
@@ -128,21 +255,21 @@ model AuditLog {
 }
 
 model PrivacyRequest {
-  id               String    @id @default(cuid())
-  type             String
-  status           String    @default("OPEN")
-  subjectUserId    String
+  id                String    @id @default(cuid())
+  type              String
+  status            String    @default("OPEN")
+  subjectUserId     String
   requestedByUserId String?
-  assignedToUserId String?
-  resolvedByUserId String?
-  reason           String?
-  requestDetails   Json?
-  resolutionNotes  String?
-  requestedAt      DateTime  @default(now())
-  dueAt            DateTime?
-  resolvedAt       DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  assignedToUserId  String?
+  resolvedByUserId  String?
+  reason            String?
+  requestDetails    Json?
+  resolutionNotes   String?
+  requestedAt       DateTime  @default(now())
+  dueAt             DateTime?
+  resolvedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   subjectUser     User  @relation("PrivacyRequestSubjectUser", fields: [subjectUserId], references: [id], onDelete: Cascade)
   requestedByUser User? @relation("PrivacyRequestRequestedByUser", fields: [requestedByUserId], references: [id], onDelete: SetNull)
