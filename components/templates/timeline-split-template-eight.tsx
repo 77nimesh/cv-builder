@@ -109,7 +109,7 @@ export default function TimelineSplitTemplateEight({
           event.stopPropagation();
           onSectionDragEnd?.();
         }}
-        className="mb-3 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 shadow-sm active:cursor-grabbing print:hidden"
+        className="mb-3 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 shadow-sm active:cursor-grabbing print:hidden"
       >
         Drag section
       </div>
@@ -132,7 +132,7 @@ export default function TimelineSplitTemplateEight({
           event.stopPropagation();
           onItemDragEnd?.();
         }}
-        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing print:hidden"
+        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing print:hidden"
       >
         Drag item
       </div>
@@ -225,14 +225,14 @@ export default function TimelineSplitTemplateEight({
   }
 
   function renderEmptyState(label: string) {
-    return <p className="text-sm text-slate-400">Add {label} entries to display them here.</p>;
+    return <p className="text-sm italic text-slate-400">Add {label} entries to display them here.</p>;
   }
 
   function renderSectionHeading(section: ResumeSection, sidebar = false) {
     return (
       <div className={sidebar ? "mb-3" : "mb-5"}>
         <h2
-          className={`font-black uppercase tracking-[0.2em] ${
+          className={`font-black uppercase tracking-[0.18em] ${
             sidebar ? "text-[10px]" : "text-[11px]"
           }`}
           style={{ color: sidebar ? theme.primary : "#0f172a" }}
@@ -629,7 +629,7 @@ export default function TimelineSplitTemplateEight({
 
           {contactItems.length > 0 && showPersonal ? (
             <section className="rounded-3xl bg-white/70 p-4 shadow-sm print-avoid-break">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                 Contact
               </p>
               <div className="mt-3 space-y-2 text-xs leading-5 text-slate-700">

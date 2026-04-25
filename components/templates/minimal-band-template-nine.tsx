@@ -99,7 +99,7 @@ export default function MinimalBandTemplateNine({
           </h1>
         ) : null}
         {hasText(personal.headline) ? (
-          <p className="mt-1 text-sm font-medium uppercase tracking-[0.2em] opacity-90">
+          <p className="mt-1.5 text-sm font-medium uppercase tracking-[0.18em] opacity-90">
             {personal.headline}
           </p>
         ) : null}
@@ -126,7 +126,7 @@ export default function MinimalBandTemplateNine({
 
   function renderHeading(section: ResumeSection) {
     return (
-      <h2 className="text-[11px] font-bold uppercase tracking-[0.26em] text-slate-950">
+      <h2 className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-950">
         {section.title}
       </h2>
     );
@@ -148,7 +148,7 @@ export default function MinimalBandTemplateNine({
           event.stopPropagation();
           onItemDragEnd?.();
         }}
-        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing print:hidden"
+        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing print:hidden"
       >
         Drag item
       </div>
@@ -244,7 +244,7 @@ export default function MinimalBandTemplateNine({
   }
 
   function renderEmptyState(label: string) {
-    return <p className="text-sm text-slate-400">Add {label} entries to display them here.</p>;
+    return <p className="text-sm italic text-slate-400">Add {label} entries to display them here.</p>;
   }
 
   function renderExperienceSection(section: ResumeSection) {
@@ -268,7 +268,7 @@ export default function MinimalBandTemplateNine({
             <p className="mt-1 text-sm text-slate-500">{meta.join(" | ")}</p>
           ) : null}
           {hasText(experience.description) ? (
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
               {experience.description}
             </p>
           ) : null}
@@ -293,7 +293,7 @@ export default function MinimalBandTemplateNine({
             <p className="mt-1 text-sm text-slate-500">{meta.join(" | ")}</p>
           ) : null}
           {hasText(education.description) ? (
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
               {education.description}
             </p>
           ) : null}
@@ -344,7 +344,7 @@ export default function MinimalBandTemplateNine({
             <p className="mt-1 break-words text-sm text-slate-500">{meta.join(" | ")}</p>
           ) : null}
           {hasText(project.description) ? (
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
               {project.description}
             </p>
           ) : null}
@@ -396,7 +396,7 @@ export default function MinimalBandTemplateNine({
             ) : null}
           </div>
           {hasText(entry.description) ? (
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
               {entry.description}
             </p>
           ) : null}
@@ -409,7 +409,7 @@ export default function MinimalBandTemplateNine({
     switch (section.type) {
       case "summary":
         return hasText(summary) ? (
-          <p className="whitespace-pre-line text-sm leading-7 text-slate-700">{summary}</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{summary}</p>
         ) : null;
       case "experience":
         return renderExperienceSection(section);
@@ -503,7 +503,7 @@ export default function MinimalBandTemplateNine({
                 event.stopPropagation();
                 onSectionDragEnd?.();
               }}
-              className="inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing"
+              className="inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing"
             >
               Drag section
             </div>

@@ -120,7 +120,7 @@ export default function ProfileFocusTemplateSeven({
           event.stopPropagation();
           onSectionDragEnd?.();
         }}
-        className="mb-3 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 shadow-sm active:cursor-grabbing print:hidden"
+        className="mb-3 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 shadow-sm active:cursor-grabbing print:hidden"
       >
         Drag section
       </div>
@@ -143,7 +143,7 @@ export default function ProfileFocusTemplateSeven({
           event.stopPropagation();
           onItemDragEnd?.();
         }}
-        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing print:hidden"
+        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing print:hidden"
       >
         Drag item
       </div>
@@ -236,14 +236,14 @@ export default function ProfileFocusTemplateSeven({
   }
 
   function renderEmptyState(label: string) {
-    return <p className="text-sm text-slate-400">Add {label} entries to display them here.</p>;
+    return <p className="text-sm italic text-slate-400">Add {label} entries to display them here.</p>;
   }
 
   function renderSectionHeading(section: ResumeSection, compact = false) {
     return (
       <div className={compact ? "mb-3" : "mb-5"}>
         <p
-          className="text-[10px] font-black uppercase tracking-[0.24em]"
+          className="text-[10px] font-black uppercase tracking-[0.22em]"
           style={{ color: theme.primary }}
         >
           {section.title}

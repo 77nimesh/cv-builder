@@ -83,7 +83,7 @@ export default function AtsCleanTemplateFour({
   function renderHeading(section: ResumeSection) {
     return (
       <h2
-        className="border-b pb-2 text-[11px] font-bold uppercase tracking-[0.22em]"
+        className="border-b pb-2.5 text-[11px] font-bold uppercase tracking-[0.2em]"
         style={{ borderColor: theme.softBorder, color: theme.primary }}
       >
         {section.title}
@@ -149,7 +149,7 @@ export default function AtsCleanTemplateFour({
               event.stopPropagation();
               onItemDragEnd?.();
             }}
-            className="mb-2 inline-flex cursor-grab rounded-full border border-slate-300 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 active:cursor-grabbing print:hidden"
+            className="mb-2 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 active:cursor-grabbing print:hidden"
           >
             Drag item
           </div>
@@ -204,12 +204,12 @@ export default function AtsCleanTemplateFour({
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0 flex-1">
           {hasText(personal.fullName) ? (
-            <h1 className="break-words text-4xl font-bold leading-tight tracking-[-0.03em] text-slate-950">
+            <h1 className="break-words text-4xl font-bold leading-tight tracking-[-0.025em] text-slate-950">
               {personal.fullName}
             </h1>
           ) : null}
           {hasText(personal.headline) ? (
-            <p className="mt-2 text-base font-semibold text-slate-700">
+            <p className="mt-2.5 text-base font-semibold text-slate-600">
               {personal.headline}
             </p>
           ) : null}
@@ -242,7 +242,7 @@ export default function AtsCleanTemplateFour({
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 {roleAndCompany.length > 0 ? (
-                  <h3 className="text-[15px] font-bold text-slate-950">
+                  <h3 className="text-[15px] font-bold leading-snug text-slate-950">
                     {roleAndCompany.join(" — ")}
                   </h3>
                 ) : null}
@@ -251,18 +251,18 @@ export default function AtsCleanTemplateFour({
                 ) : null}
               </div>
               {hasText(dateRange) ? (
-                <p className="text-sm font-medium text-slate-600">{dateRange}</p>
+                <p className="text-sm font-medium text-slate-500">{dateRange}</p>
               ) : null}
             </div>
             {hasText(experience.description) ? (
-              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+              <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                 {experience.description}
               </p>
             ) : null}
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No experience added yet.</p>,
+      <p className="text-sm italic text-slate-400">No experience added yet.</p>,
       { gapClassName: "space-y-4" }
     );
   }
@@ -283,20 +283,20 @@ export default function AtsCleanTemplateFour({
         return (
           <article>
             {hasText(title) ? (
-              <h3 className="text-[15px] font-bold text-slate-950">{title}</h3>
+              <h3 className="text-[15px] font-bold leading-snug text-slate-950">{title}</h3>
             ) : null}
             {meta.length > 0 ? (
               <p className="mt-1 text-sm text-slate-600">{meta.join(" | ")}</p>
             ) : null}
             {hasText(education.description) ? (
-              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+              <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                 {education.description}
               </p>
             ) : null}
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No education added yet.</p>,
+      <p className="text-sm italic text-slate-400">No education added yet.</p>,
       { gapClassName: "space-y-4" }
     );
   }
@@ -318,7 +318,7 @@ export default function AtsCleanTemplateFour({
           </span>
         );
       },
-      <p className="text-sm text-slate-500">No skills added yet.</p>,
+      <p className="text-sm italic text-slate-400">No skills added yet.</p>,
       { gapClassName: "flex flex-wrap gap-x-4 gap-y-1", compactItems: true }
     );
   }
@@ -339,24 +339,24 @@ export default function AtsCleanTemplateFour({
           <article>
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
               {hasText(project.name) ? (
-                <h3 className="text-[15px] font-bold text-slate-950">{project.name}</h3>
+                <h3 className="text-[15px] font-bold leading-snug text-slate-950">{project.name}</h3>
               ) : null}
               {hasText(dateRange) ? (
-                <p className="text-sm font-medium text-slate-600">{dateRange}</p>
+                <p className="text-sm font-medium text-slate-500">{dateRange}</p>
               ) : null}
             </div>
             {meta.length > 0 ? (
               <p className="mt-1 break-words text-sm text-slate-600">{meta.join(" | ")}</p>
             ) : null}
             {hasText(project.description) ? (
-              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+              <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                 {project.description}
               </p>
             ) : null}
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No projects added yet.</p>,
+      <p className="text-sm italic text-slate-400">No projects added yet.</p>,
       { gapClassName: "space-y-4" }
     );
   }
@@ -379,7 +379,7 @@ export default function AtsCleanTemplateFour({
 
         return (
           <article>
-            <h3 className="text-[15px] font-bold text-slate-950">{certification.name}</h3>
+            <h3 className="text-[15px] font-bold leading-snug text-slate-950">{certification.name}</h3>
             {meta.length > 0 ? (
               <p className="mt-1 break-words text-sm leading-6 text-slate-600">
                 {meta.join(" | ")}
@@ -388,7 +388,7 @@ export default function AtsCleanTemplateFour({
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No certifications added yet.</p>,
+      <p className="text-sm italic text-slate-400">No certifications added yet.</p>,
       { gapClassName: "space-y-3" }
     );
   }
@@ -409,21 +409,21 @@ export default function AtsCleanTemplateFour({
           <article>
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
               {hasText(title) ? (
-                <h3 className="text-[15px] font-bold text-slate-950">{title}</h3>
+                <h3 className="text-[15px] font-bold leading-snug text-slate-950">{title}</h3>
               ) : null}
               {hasText(meta) ? (
-                <p className="text-sm font-medium text-slate-600">{meta}</p>
+                <p className="text-sm font-medium text-slate-500">{meta}</p>
               ) : null}
             </div>
             {hasText(entry.description) ? (
-              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+              <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                 {entry.description}
               </p>
             ) : null}
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No items added yet.</p>,
+      <p className="text-sm italic text-slate-400">No items added yet.</p>,
       { gapClassName: "space-y-4" }
     );
   }
@@ -435,7 +435,7 @@ export default function AtsCleanTemplateFour({
 
       case "summary":
         return hasText(summary) ? (
-          <p className="text-sm leading-7 text-slate-700">{summary}</p>
+          <p className="text-sm leading-relaxed text-slate-700">{summary}</p>
         ) : null;
 
       case "experience":
@@ -460,10 +460,10 @@ export default function AtsCleanTemplateFour({
             const link = readString(item.content);
 
             return hasText(link) ? (
-              <p className="break-words text-sm leading-6 text-slate-700">{link}</p>
+              <p className="break-words text-sm leading-relaxed text-slate-700">{link}</p>
             ) : null;
           },
-          <p className="text-sm text-slate-500">No links added yet.</p>,
+          <p className="text-sm italic text-slate-400">No links added yet.</p>,
           { gapClassName: "space-y-2", compactItems: true }
         );
 
@@ -539,7 +539,7 @@ export default function AtsCleanTemplateFour({
                 event.stopPropagation();
                 onSectionDragEnd?.();
               }}
-              className="inline-flex cursor-grab rounded-full border border-slate-300 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 active:cursor-grabbing"
+              className="inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 active:cursor-grabbing"
             >
               Drag section
             </div>
@@ -570,10 +570,10 @@ export default function AtsCleanTemplateFour({
 
   return (
     <div
-      className="resume-preview-page resume-preview-surface mx-auto w-full rounded-none bg-white shadow-sm ring-1 ring-slate-200 print:bg-transparent print:ring-0"
+      className="resume-preview-page resume-preview-surface mx-auto w-full rounded-none bg-white shadow-sm ring-1 ring-slate-200/80 print:bg-transparent print:ring-0"
       style={{ fontFamily: font.cssStack }}
     >
-      <main className="resume-preview-main px-9 py-9 print:px-9" {...renderDropHandlers()}>
+      <main className="resume-preview-main px-10 py-10 print:px-10" {...renderDropHandlers()}>
         <div className="print-main-fragment space-y-6">
           {allSections.map((section) => renderSectionShell(section))}
         </div>

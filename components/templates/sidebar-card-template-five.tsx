@@ -107,7 +107,7 @@ export default function SidebarCardTemplateFive({
           event.stopPropagation();
           onSectionDragEnd?.();
         }}
-        className="mb-3 inline-flex cursor-grab rounded-full border border-slate-300 bg-white/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 shadow-sm active:cursor-grabbing print:hidden"
+        className="mb-3 inline-flex cursor-grab rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 shadow-sm active:cursor-grabbing print:hidden"
       >
         {label}
       </div>
@@ -130,7 +130,7 @@ export default function SidebarCardTemplateFive({
           event.stopPropagation();
           onItemDragEnd?.();
         }}
-        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing print:hidden"
+        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing print:hidden"
       >
         Drag item
       </div>
@@ -232,7 +232,7 @@ export default function SidebarCardTemplateFive({
           style={{ backgroundColor: theme.primary }}
         />
         <h2
-          className={`mt-2 font-bold uppercase tracking-[0.18em] ${
+          className={`mt-2 font-bold uppercase tracking-[0.16em] ${
             compact ? "text-[10px]" : "text-[11px]"
           }`}
           style={{ color: compact ? theme.primary : "#0f172a" }}
@@ -303,7 +303,7 @@ export default function SidebarCardTemplateFive({
   }
 
   function renderEmptyState(label: string) {
-    return <p className="text-sm text-slate-400">Add {label} entries to display them here.</p>;
+    return <p className="text-sm italic text-slate-400">Add {label} entries to display them here.</p>;
   }
 
   function renderExperienceSection(section: ResumeSection) {
@@ -540,7 +540,7 @@ export default function SidebarCardTemplateFive({
           {showPersonal ? (
             <section className="rounded-[1.75rem] bg-white p-5 shadow-sm print-avoid-break">
               <p
-                className="text-[10px] font-bold uppercase tracking-[0.25em]"
+                className="text-[10px] font-bold uppercase tracking-[0.24em]"
                 style={{ color: theme.primary }}
               >
                 Profile

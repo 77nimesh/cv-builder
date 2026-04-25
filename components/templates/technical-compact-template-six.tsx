@@ -108,7 +108,7 @@ export default function TechnicalCompactTemplateSix({
           event.stopPropagation();
           onSectionDragEnd?.();
         }}
-        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing print:hidden"
+        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing print:hidden"
       >
         Drag section
       </div>
@@ -131,7 +131,7 @@ export default function TechnicalCompactTemplateSix({
           event.stopPropagation();
           onItemDragEnd?.();
         }}
-        className="mb-1 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing print:hidden"
+        className="mb-1 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing print:hidden"
       >
         Drag item
       </div>
@@ -224,7 +224,7 @@ export default function TechnicalCompactTemplateSix({
   }
 
   function renderEmptyState(label: string) {
-    return <p className="text-xs text-slate-400">Add {label} entries.</p>;
+    return <p className="text-xs italic text-slate-400">Add {label} entries.</p>;
   }
 
   function renderHeading(section: ResumeSection, zone: ResumeZone) {
@@ -235,7 +235,7 @@ export default function TechnicalCompactTemplateSix({
           style={{ backgroundColor: theme.primary }}
         />
         <h2
-          className={`font-black uppercase tracking-[0.18em] ${
+          className={`font-black uppercase tracking-[0.16em] ${
             zone === "sidebar" ? "text-[10px]" : "text-[11px]"
           }`}
           style={{ color: zone === "sidebar" ? theme.primary : "#0f172a" }}
@@ -512,7 +512,7 @@ export default function TechnicalCompactTemplateSix({
             <div className="flex items-start justify-between gap-5">
               <div className="min-w-0 flex-1">
                 <p
-                  className="text-[10px] font-black uppercase tracking-[0.28em]"
+                  className="text-[10px] font-black uppercase tracking-[0.26em]"
                   style={{ color: theme.primary }}
                 >
                   Technical Resume

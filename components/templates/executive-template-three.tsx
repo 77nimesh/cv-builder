@@ -100,7 +100,7 @@ export default function ExecutiveTemplateThree({
           style={{ backgroundColor: inverse ? theme.onPrimary : theme.primary }}
         />
         <h2
-          className="text-[11px] font-bold uppercase tracking-[0.28em]"
+          className="text-[11px] font-bold uppercase tracking-[0.26em]"
           style={{ color: inverse ? theme.onPrimary : theme.primary }}
         >
           {section.title}
@@ -167,7 +167,7 @@ export default function ExecutiveTemplateThree({
               event.stopPropagation();
               onItemDragEnd?.();
             }}
-            className="mb-2 inline-flex cursor-grab rounded-full border border-slate-300 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 active:cursor-grabbing print:hidden"
+            className="mb-2 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 active:cursor-grabbing print:hidden"
           >
             Drag item
           </div>
@@ -223,7 +223,7 @@ export default function ExecutiveTemplateThree({
         return (
           <div>
             <div className="mb-6">{renderProfilePhoto()}</div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-slate-500">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500">
               Contact
             </p>
             <div className="mt-4 space-y-2 text-[13px] leading-5 text-slate-700">
@@ -265,14 +265,14 @@ export default function ExecutiveTemplateThree({
                   <div className="rounded-2xl border bg-white px-3 py-3" style={{ borderColor: theme.softBorder }}>
                     <p className="text-sm font-semibold text-slate-900">{skill.name}</p>
                     {hasText(skill.level) ? (
-                      <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-slate-500">
+                       <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-slate-500">
                         {skill.level}
                       </p>
                     ) : null}
                   </div>
                 );
               },
-              <p className="text-sm text-slate-500">No skills added yet.</p>,
+              <p className="text-sm text-slate-400">No skills added yet.</p>,
               { gapClassName: "space-y-2", compactItems: true }
             )}
           </div>
@@ -314,7 +314,7 @@ export default function ExecutiveTemplateThree({
                   </article>
                 );
               },
-              <p className="text-sm text-slate-500">No education added yet.</p>,
+              <p className="text-sm text-slate-400">No education added yet.</p>,
               { gapClassName: "space-y-3", compactItems: true }
             )}
           </div>
@@ -356,7 +356,7 @@ export default function ExecutiveTemplateThree({
                   </article>
                 );
               },
-              <p className="text-sm text-slate-500">No certifications added yet.</p>,
+              <p className="text-sm text-slate-400">No certifications added yet.</p>,
               { gapClassName: "space-y-3", compactItems: true }
             )}
           </div>
@@ -375,7 +375,7 @@ export default function ExecutiveTemplateThree({
                   <p className="break-words text-sm leading-6 text-slate-700">{link}</p>
                 ) : null;
               },
-              <p className="text-sm text-slate-500">No links added yet.</p>,
+              <p className="text-sm text-slate-400">No links added yet.</p>,
               { gapClassName: "space-y-2", compactItems: true }
             )}
           </div>
@@ -421,7 +421,7 @@ export default function ExecutiveTemplateThree({
               </div>
               {hasText(dateRange) ? (
                 <p
-                  className="text-[11px] font-bold uppercase tracking-[0.22em]"
+                  className="text-[11px] font-bold uppercase tracking-[0.2em]"
                   style={{ color: theme.primary }}
                 >
                   {dateRange}
@@ -429,14 +429,14 @@ export default function ExecutiveTemplateThree({
               ) : null}
             </div>
             {hasText(experience.description) ? (
-              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                 {experience.description}
               </p>
             ) : null}
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No experience added yet.</p>,
+      <p className="text-sm text-slate-400">No experience added yet.</p>,
       { gapClassName: "space-y-5" }
     );
   }
@@ -462,14 +462,14 @@ export default function ExecutiveTemplateThree({
               <p className="mt-2 text-sm leading-6 text-slate-600">{meta.join(" • ")}</p>
             ) : null}
             {hasText(education.description) ? (
-              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                 {education.description}
               </p>
             ) : null}
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No education added yet.</p>,
+      <p className="text-sm text-slate-400">No education added yet.</p>,
       { gapClassName: "space-y-4" }
     );
   }
@@ -496,7 +496,7 @@ export default function ExecutiveTemplateThree({
           </div>
         );
       },
-      <p className="text-sm text-slate-500">No skills added yet.</p>,
+      <p className="text-sm text-slate-400">No skills added yet.</p>,
       { gapClassName: "flex flex-wrap gap-2", compactItems: true }
     );
   }
@@ -531,14 +531,14 @@ export default function ExecutiveTemplateThree({
               ) : null}
             </div>
             {hasText(project.description) ? (
-              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                 {project.description}
               </p>
             ) : null}
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No projects added yet.</p>,
+      <p className="text-sm text-slate-400">No projects added yet.</p>,
       { gapClassName: "space-y-4" }
     );
   }
@@ -570,7 +570,7 @@ export default function ExecutiveTemplateThree({
           </article>
         );
       },
-      <p className="text-sm text-slate-500">No certifications added yet.</p>,
+      <p className="text-sm text-slate-400">No certifications added yet.</p>,
       { gapClassName: "space-y-4" }
     );
   }
@@ -598,14 +598,14 @@ export default function ExecutiveTemplateThree({
                   <p className="text-sm leading-6 text-slate-600">{meta.join(" • ")}</p>
                 ) : null}
                 {hasText(entry.description) ? (
-                  <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">
+                  <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                     {entry.description}
                   </p>
                 ) : null}
               </article>
             );
           },
-          <p className="text-sm text-slate-500">No items added yet.</p>,
+          <p className="text-sm text-slate-400">No items added yet.</p>,
           { gapClassName: compact ? "space-y-3" : "space-y-4", compactItems: compact }
         )}
       </div>
@@ -620,7 +620,7 @@ export default function ExecutiveTemplateThree({
             <div className="min-w-0 flex-1">
               {hasText(personal.headline) ? (
                 <p
-                  className="text-xs font-bold uppercase tracking-[0.34em]"
+                  className="text-xs font-bold uppercase tracking-[0.32em]"
                   style={{ color: theme.primary }}
                 >
                   {personal.headline}
@@ -702,7 +702,7 @@ export default function ExecutiveTemplateThree({
                   <p className="break-words text-sm leading-6 text-slate-700">{link}</p>
                 ) : null;
               },
-              <p className="text-sm text-slate-500">No links added yet.</p>,
+              <p className="text-sm text-slate-400">No links added yet.</p>,
               { gapClassName: "space-y-2", compactItems: true }
             )}
           </div>
@@ -787,7 +787,7 @@ export default function ExecutiveTemplateThree({
                 event.stopPropagation();
                 onSectionDragEnd?.();
               }}
-              className="inline-flex cursor-grab rounded-full border border-slate-300 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 active:cursor-grabbing"
+              className="inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 active:cursor-grabbing"
             >
               Drag section
             </div>

@@ -150,7 +150,7 @@ export default function CardGridTemplateTen({
           <div className="min-w-0 flex-1">
             {showPersonal && hasText(personal.headline) ? (
               <p
-                className="text-xs font-black uppercase tracking-[0.24em]"
+                className="text-xs font-black uppercase tracking-[0.22em]"
                 style={{ color: theme.primary }}
               >
                 {personal.headline}
@@ -181,7 +181,7 @@ export default function CardGridTemplateTen({
             {featureCards.map((card, index) => (
               <div
                 key={`${card.label}-${index}`}
-                className="print-avoid-break rounded-2xl border bg-white p-3 shadow-sm"
+                className="print-avoid-break rounded-2xl border bg-white p-3.5 shadow-sm"
                 style={{ borderColor: theme.softBorder }}
               >
                 <p className="break-words text-[13px] font-black leading-snug text-slate-950">
@@ -209,7 +209,7 @@ export default function CardGridTemplateTen({
   function renderHeading(section: ResumeSection) {
     return (
       <div className="mb-4 flex items-center gap-3">
-        <h2 className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-950">
+        <h2 className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">
           {section.title}
         </h2>
         <div className="h-px flex-1" style={{ backgroundColor: theme.softBorder }} />
@@ -233,7 +233,7 @@ export default function CardGridTemplateTen({
           event.stopPropagation();
           onItemDragEnd?.();
         }}
-        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing print:hidden"
+        className="mb-2 inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing print:hidden"
       >
         Drag item
       </div>
@@ -329,7 +329,7 @@ export default function CardGridTemplateTen({
   }
 
   function renderEmptyState(label: string) {
-    return <p className="text-sm text-slate-400">Add {label} entries to display them here.</p>;
+    return <p className="text-sm italic text-slate-400">Add {label} entries to display them here.</p>;
   }
 
   function renderExperienceSection(section: ResumeSection) {
@@ -355,7 +355,7 @@ export default function CardGridTemplateTen({
             <p className="mt-1 text-sm text-slate-500">{meta.join(" • ")}</p>
           ) : null}
           {hasText(experience.description) ? (
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
               {experience.description}
             </p>
           ) : null}
@@ -380,7 +380,7 @@ export default function CardGridTemplateTen({
             <p className="mt-1 text-sm text-slate-500">{meta.join(" • ")}</p>
           ) : null}
           {hasText(education.description) ? (
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
               {education.description}
             </p>
           ) : null}
@@ -435,7 +435,7 @@ export default function CardGridTemplateTen({
             <p className="mt-1 break-words text-sm text-slate-500">{meta.join(" • ")}</p>
           ) : null}
           {hasText(project.description) ? (
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
               {project.description}
             </p>
           ) : null}
@@ -487,7 +487,7 @@ export default function CardGridTemplateTen({
             ) : null}
           </div>
           {hasText(entry.description) ? (
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
               {entry.description}
             </p>
           ) : null}
@@ -572,7 +572,7 @@ export default function CardGridTemplateTen({
         data-zone="main"
         data-resume-section-type={section.type}
         data-print-strategy={getResumeSectionPrintStrategy(section, "main")}
-        className={`resume-section-block rounded-3xl border bg-white p-5 ${
+        className={`resume-section-block rounded-3xl border bg-white p-6 ${
           editable ? "ring-1 ring-transparent transition hover:ring-slate-300" : ""
         } ${isDropTargetSection ? "ring-2 ring-slate-400" : ""} ${
           isDraggedSection ? "opacity-60" : ""
@@ -591,7 +591,7 @@ export default function CardGridTemplateTen({
                 event.stopPropagation();
                 onSectionDragEnd?.();
               }}
-              className="inline-flex cursor-grab rounded-full border border-slate-300 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 active:cursor-grabbing"
+              className="inline-flex cursor-grab rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 active:cursor-grabbing"
             >
               Drag section
             </div>
@@ -627,7 +627,7 @@ export default function CardGridTemplateTen({
     >
       {renderHeader()}
 
-      <main className="resume-preview-main bg-white px-8 py-8" {...renderDropHandlers()}>
+      <main className="resume-preview-main bg-white px-9 py-9" {...renderDropHandlers()}>
         <div className="print-main-fragment space-y-5">
           {contentSections.map((section) => renderSectionShell(section))}
         </div>
