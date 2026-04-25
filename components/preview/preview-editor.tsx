@@ -7,10 +7,7 @@ import {
   FontFamilyDropdown,
   ThemeColorDropdown,
 } from "@/components/forms/design-dropdowns";
-import {
-  RESUME_TEMPLATE_IDS,
-  getResumeTemplateDefinition,
-} from "@/components/templates/template-registry";
+import TemplateDropdown from "@/components/forms/template-dropdown";
 import type {
   ResumeRecord,
   ResumeSection,
@@ -420,20 +417,11 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
               <label className="mb-2 block text-sm font-medium text-slate-900">
                 Template
               </label>
-              <select
+              <TemplateDropdown
                 value={draftResume.template}
                 onChange={(event) => void handleTemplateChange(event.target.value)}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none"
-              >
-                {RESUME_TEMPLATE_IDS.map((templateId) => {
-                  const templateDefinition = getResumeTemplateDefinition(templateId);
-                  return (
-                    <option key={templateId} value={templateId}>
-                      {templateDefinition.label}
-                    </option>
-                  );
-                })}
-              </select>
+              />
             </div>
 
             <div>
@@ -523,20 +511,11 @@ export default function PreviewEditor({ resume }: PreviewEditorProps) {
                 <label className="mb-2 block text-sm font-medium text-slate-900">
                   Template
                 </label>
-                <select
+                <TemplateDropdown
                   value={draftResume.template}
                   onChange={(event) => void handleTemplateChange(event.target.value)}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none"
-                >
-                  {RESUME_TEMPLATE_IDS.map((templateId) => {
-                    const templateDefinition = getResumeTemplateDefinition(templateId);
-                    return (
-                      <option key={templateId} value={templateId}>
-                        {templateDefinition.label}
-                      </option>
-                    );
-                  })}
-                </select>
+                />
               </div>
 
               <div>

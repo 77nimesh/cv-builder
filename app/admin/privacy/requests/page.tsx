@@ -9,10 +9,15 @@ import {
   writeAuditLog,
 } from "@/lib/privacy/audit";
 import {
+  PRIVACY_REQUEST_TYPES,
   PRIVACY_REQUEST_STATUSES,
   PRIVACY_RETENTION_PLACEHOLDERS,
+  isActivePrivacyRequestStatus,
 } from "@/lib/privacy/retention";
-import { updatePrivacyRequestStatusAction } from "@/app/admin/privacy/requests/actions";
+import {
+  executeAccountDeletionAnonymizationAction,
+  updatePrivacyRequestStatusAction,
+} from "@/app/admin/privacy/requests/actions";
 
 type PrivacyRequestsPageProps = {
   searchParams?: Promise<{
@@ -216,6 +221,32 @@ export default async function PrivacyRequestsPage({
                       {formatDateTime(privacyRequest.resolvedAt)}
                     </td>
                     <td className="space-y-2 py-3 pr-4">
+                      {(() => {
+                        const isResolved =
+                          Boolean(privacyRequest.resolvedAt) ||
+                          !isActivePrivacyRequestStatus(privacyRequest.status);
+
+                        const isAccountDeletion =
+                          privacyRequest.type ===
+                          PRIVACY_REQUEST_TYPES.ACCOUNT_DELETION;
+
+                        const disableInReview =
+                          isResolved ||
+                          privacyRequest.status ===
+                            PRIVACY_REQUEST_STATUSES.IN_REVIEW;
+
+                        const disableCompleted =
+                          isResolved ||
+                          privacyRequest.status ===
+                            PRIVACY_REQUEST_STATUSES.COMPLETED;
+
+                        const disableRejected =
+                          isResolved ||
+                          privacyRequest.status ===
+                            PRIVACY_REQUEST_STATUSES.REJECTED;
+
+                        return (
+                          <>
                       <form action={updatePrivacyRequestStatusAction}>
                         <input
                           type="hidden"
@@ -229,30 +260,49 @@ export default async function PrivacyRequestsPage({
                         />
                         <button
                           type="submit"
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                          disabled={disableInReview}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Mark in review
                         </button>
                       </form>
 
-                      <form action={updatePrivacyRequestStatusAction}>
-                        <input
-                          type="hidden"
-                          name="requestId"
-                          value={privacyRequest.id}
-                        />
-                        <input
-                          type="hidden"
-                          name="status"
-                          value={PRIVACY_REQUEST_STATUSES.COMPLETED}
-                        />
-                        <button
-                          type="submit"
-                          className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800"
-                        >
-                          Mark completed
-                        </button>
-                      </form>
+                      {isAccountDeletion ? (
+                        <form action={executeAccountDeletionAnonymizationAction}>
+                          <input
+                            type="hidden"
+                            name="requestId"
+                            value={privacyRequest.id}
+                          />
+                          <button
+                            type="submit"
+                            disabled={disableCompleted}
+                            className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Execute anonymization &amp; complete
+                          </button>
+                        </form>
+                      ) : (
+                        <form action={updatePrivacyRequestStatusAction}>
+                          <input
+                            type="hidden"
+                            name="requestId"
+                            value={privacyRequest.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="status"
+                            value={PRIVACY_REQUEST_STATUSES.COMPLETED}
+                          />
+                          <button
+                            type="submit"
+                            disabled={disableCompleted}
+                            className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Mark completed
+                          </button>
+                        </form>
+                      )}
 
                       <form action={updatePrivacyRequestStatusAction}>
                         <input
@@ -267,11 +317,15 @@ export default async function PrivacyRequestsPage({
                         />
                         <button
                           type="submit"
-                          className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-red-700"
+                          disabled={disableRejected}
+                          className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Reject
                         </button>
                       </form>
+                          </>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}

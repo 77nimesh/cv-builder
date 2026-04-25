@@ -12,7 +12,14 @@ export async function getCurrentSession(): Promise<AppSession> {
 
 export async function getCurrentUser(): Promise<AppSessionUser | null> {
   const session = await getCurrentSession();
-  return session?.user ?? null;
+
+  const user = session?.user ?? null;
+
+  if (!user?.id) {
+    return null;
+  }
+
+  return user;
 }
 
 export async function requireCurrentUser(): Promise<AppSessionUser> {

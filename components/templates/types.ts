@@ -5,8 +5,12 @@ export type DraggedItemState = {
   itemId: string;
 };
 
+export type ResumeTemplateRenderMode = "preview" | "print";
+
 export type ResumeTemplateProps = {
   data: ResumeData;
+  templateId?: string;
+  mode?: ResumeTemplateRenderMode;
   photoPath?: string | null;
   editable?: boolean;
   draggedSectionId?: string | null;

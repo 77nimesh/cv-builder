@@ -3,7 +3,10 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireCurrentUser } from "@/lib/auth/session";
-import { updatePrivacyRequestStatus } from "@/lib/privacy/privacy-requests";
+import {
+  executeAccountDeletionAnonymization,
+  updatePrivacyRequestStatus,
+} from "@/lib/privacy/privacy-requests";
 import {
   PRIVACY_REQUEST_STATUSES,
   isPrivacyRequestStatus,
@@ -61,4 +64,34 @@ export async function updatePrivacyRequestStatusAction(formData: FormData) {
 
   revalidatePath("/admin/privacy/requests");
   redirectWithMessage("message", "Privacy request updated.");
+}
+
+export async function executeAccountDeletionAnonymizationAction(
+  formData: FormData
+) {
+  const user = await requireCurrentUser();
+  const requestId = readTextValue(formData, "requestId");
+
+  if (!requestId) {
+    redirectWithMessage("error", "Privacy request id is required.");
+  }
+
+  try {
+    await executeAccountDeletionAnonymization({
+      actor: user,
+      requestId,
+    });
+  } catch (error) {
+    console.error("Failed to execute account anonymization:", error);
+
+    redirectWithMessage(
+      "error",
+      error instanceof Error
+        ? error.message
+        : "Failed to execute account anonymization."
+    );
+  }
+
+  revalidatePath("/admin/privacy/requests");
+  redirectWithMessage("message", "Account anonymized and request completed.");
 }

@@ -12,6 +12,7 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import PhotoUploadField from "@/components/forms/photo-upload-field";
+import TemplateDropdown from "@/components/forms/template-dropdown";
 import {
   FontFamilyDropdown,
   ThemeColorDropdown,
@@ -429,13 +430,10 @@ export default function ResumeForm({ resume }: ResumeFormProps) {
 
           <div>
             <label className="mb-2 block text-sm font-medium">Template</label>
-            <select
+            <TemplateDropdown
               {...register("template")}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            >
-              <option value="modern-1">Modern 1</option>
-              <option value="modern-2">Modern 2</option>
-            </select>
+            />
           </div>
         </div>
 

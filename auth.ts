@@ -46,6 +46,10 @@ const authConfig = {
           return null;
         }
 
+        if (user.anonymizedAt) {
+          return null;
+        }
+
         const isValidPassword = await verifyPassword(
           password,
           user.passwordHash
@@ -84,10 +88,21 @@ const authConfig = {
           name: true,
           role: true,
           emailVerified: true,
+          anonymizedAt: true,
         },
       });
 
       if (!dbUser) {
+        return token;
+      }
+
+      if (dbUser.anonymizedAt) {
+        token.sub = undefined;
+        token.name = undefined;
+        token.email = undefined;
+        token.role = undefined;
+        token.emailVerifiedAt = null;
+        token.isEmailVerified = false;
         return token;
       }
 

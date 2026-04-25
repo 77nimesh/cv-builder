@@ -2,7 +2,7 @@
 
 import type { ResumeRecord, ResumeZone } from "@/lib/types";
 import {
-  getActiveResumeTemplateId,
+  getRenderableResumeTemplateId,
   getResumeTemplateDefinitionForRecord,
   getResumeTemplatePrintBackgroundColor,
 } from "@/components/templates/template-registry";
@@ -52,16 +52,19 @@ export default function ResumePreview({
   onItemListDrop,
   onItemDragEnd,
 }: ResumePreviewProps) {
-  const activeTemplateId = getActiveResumeTemplateId(resume);
+  const activeTemplateId = getRenderableResumeTemplateId(resume);
   const templateDefinition = getResumeTemplateDefinitionForRecord(resume);
   const printBackgroundColor = getResumeTemplatePrintBackgroundColor(
     templateDefinition.id,
     resume.data.layout.themeColor
   );
   const pageShellStyle = getResumePreviewShellStyle(templateDefinition.id);
+  const printBackground = templateDefinition.printBackground;
 
   const templateProps: ResumeTemplateProps = {
     data: resume.data,
+    templateId: templateDefinition.id,
+    mode,
     photoPath: resume.photoPath,
     editable,
     draggedSectionId,
@@ -84,6 +87,7 @@ export default function ResumePreview({
     <div
       data-resume-template={templateDefinition.id}
       data-resume-mode={mode}
+      data-resume-layout={templateDefinition.layoutKind}
       className={
         mode === "print"
           ? "resume-preview-shell relative mx-auto w-full bg-white print:w-full"
@@ -91,12 +95,12 @@ export default function ResumePreview({
       }
       style={pageShellStyle}
     >
-      {mode === "print" && templateDefinition.printBackgroundSide ? (
+      {mode === "print" && printBackground && printBackgroundColor ? (
         <div
           aria-hidden
           className={`pointer-events-none fixed inset-y-0 hidden print:block ${
-            templateDefinition.printBackgroundSide === "left" ? "left-0" : "right-0"
-          } ${templateDefinition.printBackgroundWidthClassName ?? "w-[280px]"}`}
+            printBackground.side === "left" ? "left-0" : "right-0"
+          } ${printBackground.widthClassName}`}
           style={{ backgroundColor: printBackgroundColor }}
         />
       ) : null}
